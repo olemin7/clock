@@ -2,7 +2,8 @@
 clock with ntp synk
 
 # libs
-
+ "Rtc by Makuna"
+ 
 # referenses
 schematic: https://circuits.io/circuits/3798057-net-clock-led
 
@@ -22,9 +23,9 @@ Pin | | | | | comment
 15|GND
 16|GPIO15|MTDO|HSPI_CS|U0RTS
 17|GPIO2|U1TXD
-18|GPIO0||SPI_CS2
-19|GPIO4
-20|GPIO5
+18|GPIO0|SPI_CS2
+19|GPIO4|SDA
+20|GPIO5|SCL
 21|GPIO3|U0RXD
 22|GPIO1|U0TXD|SPI_CS1
 
