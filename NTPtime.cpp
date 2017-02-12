@@ -19,9 +19,9 @@ void NTPtime::init(){
 	 udp.begin(localPort);
 }
 /***
- *  Unix time
+ *  Epoch(Unix) time
  */
-unsigned long  NTPtime::getTime(){
+int  NTPtime::getTime(int32 &epoch){
 	 //get a random server from the pool
 	  WiFi.hostByName(ntpServerName, timeServerIP);
 
@@ -31,7 +31,7 @@ unsigned long  NTPtime::getTime(){
 
 	  int cb = udp.parsePacket();
 	  if (!cb) {
-		return 0;
+		return 1;
 	  }
 
 	// We've received a packet, read the data from it
@@ -47,8 +47,8 @@ unsigned long  NTPtime::getTime(){
 	unsigned long secsSince1900 = highWord << 16 | lowWord;
 	const unsigned long seventyYears = 2208988800UL;
 	// subtract seventy years:
-	unsigned long epoch = secsSince1900 - seventyYears;
-	return epoch;
+	epoch = secsSince1900 - seventyYears;
+	return 0;
 
 
 //	    // print the hour, minute and second:
@@ -70,7 +70,6 @@ unsigned long  NTPtime::getTime(){
 }
 unsigned long NTPtime::sendNTPpacket(IPAddress& address)
 {
-  Serial.println("sending NTP packet...");
   // set all bytes in the buffer to 0
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request

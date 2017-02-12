@@ -26,7 +26,7 @@ private:
 public:
 	NTPtime();
 	void init();
-	unsigned long getTime();
+	int getTime(int32 &epoch);
 	virtual ~NTPtime();
 };
 
