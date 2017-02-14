@@ -8,9 +8,13 @@
 #include "CLightDetectResistor.h"
 
 #include "CRTCWraper.h"
-
+#if 0
 char ssid[] = "Guest1";  //  your network SSID (name)
 char pass[] = "MH-6346PQMS";       // your network password
+#else
+char ssid[] = "ITPwifi";  //  your network SSID (name)
+char pass[] = "_RESTRICTED3db@ea";       // your network password
+#endif
 
 
 int pinCS = 2; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )

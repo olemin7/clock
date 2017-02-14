@@ -2,7 +2,12 @@
 clock with ntp synk
 
 # libs
- "Rtc by Makuna"
+ 1 "Rtc by Makuna"
+ https://github.com/Makuna/Rtc.git
+ 2.1
+ https://github.com/adafruit/Adafruit-GFX-Library.git
+ 2.2
+ https://github.com/markruys/arduino-Max72xxPanel.git
  
 # referenses
 schematic: https://circuits.io/circuits/3798057-net-clock-led
