@@ -66,46 +66,39 @@ void setup() {
   matrix.setTextSize(1);
   matrix.print("test");
 }
-long period=0;
+
 void loop() {
-	period++;
-	delay(10);
-	if(0==(period%50)){//fast 0.5 sec
-		int32 time;
-		if(rtc.getTime(time))
-	    {
-	        // Common Cuases:
-	        //    1) the battery on the device is low or even missing and the power line was disconnected
-	        Serial.println("RTC lost confidence in the DateTime!");
-	    }
-	    RtcDateTime now;
-	    now.InitWithEpoch32Time(time);
-	    Serial.printf("%02u:%02u:%02u\n", now.Hour(),now.Minute(),now.Second());
-	    matrix.fillScreen(LOW);
 
-		matrix.setCursor(0,0);
-		matrix.printf("%02u:%02u", now.Hour(),now.Minute());
-		matrix.write();
+	unsigned long period=millis();
+	int32 date;
+	if(ntpTime.getTimeAsink(date)){
+		RtcDateTime now;
+		Serial.print(period);
+		Serial.print("Received NTP ");
+		now.InitWithEpoch32Time(date);
+		Serial.printf("%02u:%02u:%02u\n", now.Hour(),now.Minute(),now.Second());
 	}
+//	if(0==(period%50)){//fast 0.5 sec
+//		int32 time;
+//		if(rtc.getTime(time))
+//	    {
+//	        // Common Cuases:
+//	        //    1) the battery on the device is low or even missing and the power line was disconnected
+//	        Serial.println("RTC lost confidence in the DateTime!");
+//	    }
+//	    RtcDateTime now;
+//	    now.InitWithEpoch32Time(time);
+//	    Serial.printf("%02u:%02u:%02u\n", now.Hour(),now.Minute(),now.Second());
+//	    matrix.fillScreen(LOW);
+//
+//		matrix.setCursor(0,0);
+//		matrix.printf("%02u:%02u", now.Hour(),now.Minute());
+//		matrix.write();
+//	}
 
-	if(1==(period%(30*100))){//10 sec
-			int32 timeNtp ;
-			 Serial.print("sending NTP packet...");
-			if(0==ntpTime.getTime(timeNtp)){
-				Serial.print("have answer");
-				int32 rtcTime;
-				rtc.getTime(rtcTime);
-				if(abs(rtcTime-timeNtp)>5){//time delta is more 30 sec
-					rtc.setTime(timeNtp);
-					Serial.print("ntp time synk");
-				}
-
-			}
-			Serial.println();
-	}
-	if(0==(period%(30*100))){
-		Serial.printf("LDR sensor %d , temperature %lf C \n",	ldr.get(),rtc.GetTemperature());
-	}
+//	if(0==(period%(30*100))){
+//		Serial.printf("LDR sensor %d , temperature %lf C \n",	ldr.get(),rtc.GetTemperature());
+//	}
 
 
 }

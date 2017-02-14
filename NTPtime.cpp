@@ -11,30 +11,15 @@
 
 
 NTPtime::NTPtime() {
-	// TODO Auto-generated constructor stub
-
 }
 
 void NTPtime::init(){
 	 udp.begin(localPort);
+	 WiFi.hostByName(ntpServerName, timeServerIP);
 }
-/***
- *  Epoch(Unix) time
- */
-int  NTPtime::getTime(int32 &epoch){
-	 //get a random server from the pool
-	  WiFi.hostByName(ntpServerName, timeServerIP);
 
-	  sendNTPpacket(timeServerIP); // send an NTP packet to a time server
-	  // wait to see if a reply is available
-	  delay(1000);
-
-	  int cb = udp.parsePacket();
-	  if (!cb) {
-		return 1;
-	  }
-
-	// We've received a packet, read the data from it
+int32 NTPtime::parceAsEpoch(){
+	refreshed=millis();
 	udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
 	//the timestamp starts at byte 40 of the received packet and is four bytes,
@@ -47,30 +32,31 @@ int  NTPtime::getTime(int32 &epoch){
 	unsigned long secsSince1900 = highWord << 16 | lowWord;
 	const unsigned long seventyYears = 2208988800UL;
 	// subtract seventy years:
-	epoch = secsSince1900 - seventyYears;
-	return 0;
-
-
-//	    // print the hour, minute and second:
-//	    Serial.print("The UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
-//	    Serial.print((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
-//	    Serial.print(':');
-//	    if ( ((epoch % 3600) / 60) < 10 ) {
-//	      // In the first 10 minutes of each hour, we'll want a leading '0'
-//	      Serial.print('0');
-//	    }
-//	    Serial.print((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
-//	    Serial.print(':');
-//	    if ( (epoch % 60) < 10 ) {
-//	      // In the first 10 seconds of each minute, we'll want a leading '0'
-//	      Serial.print('0');
-//	    }
-//	    Serial.println(epoch % 60); // print the second
-
+	return secsSince1900 - seventyYears;
 }
-unsigned long NTPtime::sendNTPpacket(IPAddress& address)
+
+int  NTPtime::getTime(int32 &epoch){
+	sendNTPpacket();
+	  // wait to see if a reply is available
+	  int i=100;
+	  do{
+		  if(0==i){
+			  return 1;
+		  }
+		  i--;
+		  delay(10);
+
+    }while(0==udp.parsePacket());
+	// We've received a packet, read the data from it
+	epoch= parceAsEpoch();
+	return 0;
+}
+
+int NTPtime::sendNTPpacket()
 {
-  // set all bytes in the buffer to 0
+  // all NTP fields have been given values, now
+  // you can send a packet requesting a timestamp:
+	  // set all bytes in the buffer to 0
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
   // (see URL above for details on the packets)
@@ -83,12 +69,43 @@ unsigned long NTPtime::sendNTPpacket(IPAddress& address)
   packetBuffer[13]  = 0x4E;
   packetBuffer[14]  = 49;
   packetBuffer[15]  = 52;
-
-  // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp:
-  udp.beginPacket(address, 123); //NTP requests are to port 123
+  udp.beginPacket(timeServerIP, 123); //NTP requests are to port 123
   udp.write(packetBuffer, NTP_PACKET_SIZE);
-  udp.endPacket();
+  return udp.endPacket();
+}
+
+bool NTPtime::getTimeAsink(int32 &epoch){
+	const uint32 curms=millis();
+#ifdef DUBUG_CLOCK_NTPTIME
+	Serial.println();
+	Serial.print(curms);
+	Serial.print(" ");
+	Serial.print(curms-refreshed);
+
+#endif
+	if((refreshed+refreshPeriodDef)>curms){
+		return false;//time out is not passed
+	}
+#ifdef DUBUG_CLOCK_NTPTIME
+	Serial.print(" ");
+	Serial.print(curms-sendOn);
+#endif
+	if((sendOn+sendDiscardPeriod)<curms){//send or resend request
+		sendNTPpacket();
+		sendOn=millis();
+		return false;
+	}
+	//wait reply
+#ifdef DUBUG_CLOCK_NTPTIME
+	Serial.print("wait reply");
+#endif
+	if (0==udp.parsePacket()) {
+			return false;
+	}
+	sendOn=0;
+	refreshed=millis();
+	epoch= parceAsEpoch();
+	return true;
 }
 
 NTPtime::~NTPtime() {
