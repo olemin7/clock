@@ -75,6 +75,20 @@ int CRTCWraper::getTime(int32 &time){
 	time=Rtc.GetDateTime().Epoch32Time();
 	return 0;
 }
+int32 CRTCWraper::convertTime(int32 time,int32 offset,bool summerAut){
+	time+=offset;
+	return time;
+}
+
+int CRTCWraper::getTime(int32 &time,int32 offset,bool summerAuto){
+	int32 epoch;
+	int tmp=getTime(epoch);
+	if(tmp){
+		return tmp;
+	}
+	time=convertTime(epoch,offset,summerAuto);
+	return 0;
+}
 
 CRTCWraper::~CRTCWraper() {
 	// TODO Auto-generated destructor stub

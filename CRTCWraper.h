@@ -14,9 +14,12 @@
 class CRTCWraper {
 	RtcDS3231<TwoWire> Rtc;
 public:
+	int32 convertTime(int32 time,int32 offset,bool summerAuto);
 	CRTCWraper();
 	int setTime(const int32 time);
 	int getTime(int32 &time);
+	int getTime(int32 &time,int32 offset,bool summerAuto);
+	RtcDS3231& getRtc(){return Rtc;}
 	float GetTemperature(){
 		return Rtc.GetTemperature().AsFloat();
 	}

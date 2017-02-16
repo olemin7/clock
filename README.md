@@ -8,7 +8,10 @@ clock with ntp synk
  https://github.com/adafruit/Adafruit-GFX-Library.git
  2.2
  https://github.com/markruys/arduino-Max72xxPanel.git
- 
+ 3.
+ https://github.com/PaulStoffregen/Time.git
+ 4.
+ https://github.com/JChristensen/Timezone.git
 # referenses
 schematic: https://circuits.io/circuits/3798057-net-clock-led
 

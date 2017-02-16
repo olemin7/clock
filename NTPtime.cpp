@@ -35,21 +35,20 @@ int32 NTPtime::parceAsEpoch() {
   return secsSince1900 - seventyYears;
 }
 
-int NTPtime::getTime(int32 &epoch) {
+time_t NTPtime::getTime() {
   sendNTPpacket();
   // wait to see if a reply is available
   int i = 100;
   do {
     if (0 == i) {
-      return 1;
+      return 0;
     }
     i--;
     delay(10);
 
   } while (0 == udp.parsePacket());
   // We've received a packet, read the data from it
-  epoch = parceAsEpoch();
-  return 0;
+  return parceAsEpoch();
 }
 
 int NTPtime::sendNTPpacket() {
@@ -73,7 +72,7 @@ int NTPtime::sendNTPpacket() {
   return udp.endPacket();
 }
 
-bool NTPtime::getTimeAsink(int32 &epoch) {
+time_t NTPtime::getTimeAsink() {
   const uint32 curms = millis();
 #ifdef DUBUG_CLOCK_NTPTIME
   Serial.println();
@@ -82,8 +81,8 @@ bool NTPtime::getTimeAsink(int32 &epoch) {
   Serial.print(curms - refreshed);
 
 #endif
-  if ((refreshed + refreshPeriodDef) > curms) {
-    return false; // time out is not passed
+  if ((refreshed + refreshPeriod) > curms) {
+    return 0; // time out is not passed
   }
 #ifdef DUBUG_CLOCK_NTPTIME
   Serial.print(" ");
@@ -92,19 +91,18 @@ bool NTPtime::getTimeAsink(int32 &epoch) {
   if ((sendOn + sendDiscardPeriod) < curms) { // send or resend request
     sendNTPpacket();
     sendOn = millis();
-    return false;
+    return 0;
   }
 // wait reply
 #ifdef DUBUG_CLOCK_NTPTIME
   Serial.print("wait reply");
 #endif
   if (0 == udp.parsePacket()) {
-    return false;
+    return 0;
   }
   sendOn = 0;
   refreshed = millis();
-  epoch = parceAsEpoch();
-  return true;
+  return parceAsEpoch();;
 }
 
 NTPtime::~NTPtime() {
