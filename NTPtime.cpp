@@ -102,7 +102,8 @@ time_t NTPtime::getTimeAsink() {
   }
   sendOn = 0;
   refreshed = millis();
-  return parceAsEpoch();;
+  return parceAsEpoch();
+  ;
 }
 
 NTPtime::~NTPtime() {
