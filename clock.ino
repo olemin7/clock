@@ -15,6 +15,7 @@
 #include "CLightDetectResistor.h"
 #include "CDisplayClock.h"
 #include "CIntensity.h"
+#include "FreeMono9pt7b.h"
 
 #if 0
 char ssid[] = "Guest1";  //  your network SSID (name)
@@ -156,6 +157,8 @@ void setup() {
   matrix.setRotation(1,1);
   matrix.setRotation(2,1);
   matrix.setRotation(3,1);
+
+  matrix.setFont(&FreeMono9pt7b);
 
   matrix.fillScreen(LOW);
   matrix.setTextColor(HIGH, LOW);

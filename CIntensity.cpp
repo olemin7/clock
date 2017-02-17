@@ -8,15 +8,11 @@
 #include "CIntensity.h"
 
 CIntensity::CIntensity() {
-	// TODO Auto-generated constructor stub
-
+  // TODO Auto-generated constructor stub
 }
 
-void CIntensity::setGetEnviropment(tGetEnviropment func, int min, int max) {
-}
+void CIntensity::setGetEnviropment(tGetEnviropment func, int min, int max) {}
 
-void CIntensity::handle() {
-}
+void CIntensity::handle() {}
 
-void CIntensity::setSetIntensity(tSetIntensity func, int min, int max) {
-}
+void CIntensity::setSetIntensity(tSetIntensity func, int min, int max) {}

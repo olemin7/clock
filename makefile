@@ -4,11 +4,12 @@ COMPILE=$(ADIR)arduino
 PROJECT_FOLDER=/cryptfs/tmp/hobby/clock/
 PROJECT_NAME=clock.ino
 PROJECT=$(PROJECT_FOLDER)$(PROJECT_NAME)
+#FLAGS="-v"
 all: clean build
 upload:
-	$(COMPILE) --upload -v $(PROJECT)
+	$(COMPILE) --upload $(FLAGS) $(PROJECT)
 build:
-	$(COMPILE) --verify -v $(PROJECT)
+	$(COMPILE) --verify $(FLAGS) $(PROJECT)
 	@echo "done"
 clean:
 	@echo "clean"
