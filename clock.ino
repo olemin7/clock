@@ -5,7 +5,6 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <TimeLib.h>
-#include <Timezone.h>
 
 #include <Wire.h> // must be included here so that Arduino library object file references work
 #include <RtcDS3231.h>
@@ -14,6 +13,7 @@
 
 #include "NTPtime.h"
 #include "CLightDetectResistor.h"
+#include "CDisplayClock.h"
 
 #if 0
 char ssid[] = "Guest1";  //  your network SSID (name)
@@ -44,11 +44,9 @@ RtcDS3231<TwoWire> rtc(Wire);
 NTPtime ntpTime;
 CLightDetectResistor ldr;
 time_t ntp_next_synk;
+CDisplayClock displayClock;
 
 //US Eastern Time Zone (New York, Detroit)
-TimeChangeRule myDST = {"DST", Last, Sun, Mar, 3, +3*60};    //Daylight time = UTC - 4 hours
-TimeChangeRule mySTD = {"STD", Last, Sun, Oct, 4, +2*60};     //Standard time = UTC - 5 hours
-Timezone myTZ(myDST, mySTD);
 
 time_t getRTCTime(){
 #ifdef DEBUG
@@ -158,17 +156,6 @@ void setup() {
   Serial.println(ssid);
   WiFi.begin(ssid, pass);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-
-
   //--------------
   ntpTime.init();
   setSyncProvider(getRTCTime);
@@ -179,14 +166,25 @@ void setup() {
   matrix.print("test");
 }
 unsigned long period=0;
+wl_status_t wl_status= WL_IDLE_STATUS;
 void loop() {
 
 	period++;
 	delay(10);
 
-	if(0==(period%100)){
-		time_t local=myTZ.toLocal(now());
-		Serial.printf("%02u:%02u:%02u\n", hour(local),minute(local),second(local));
+	if(wl_status!=WiFi.status()){
+		wl_status=WiFi.status();
+		Serial.printf("WiFi.status %d\n",wl_status);
+		if(WL_CONNECTED==wl_status){
+			  Serial.print("WiFi connected, IP address: ");
+			  Serial.println(WiFi.localIP());
+		}
+
+	}
+
+	//update info
+	if(displayClock.isChangedMin()){
+		Serial.println(displayClock.getStrMin());
 	}
 
 
