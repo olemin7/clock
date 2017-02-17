@@ -14,6 +14,7 @@
 #include "NTPtime.h"
 #include "CLightDetectResistor.h"
 #include "CDisplayClock.h"
+#include "CIntensity.h"
 
 #if 0
 char ssid[] = "Guest1";  //  your network SSID (name)
@@ -45,6 +46,7 @@ NTPtime ntpTime;
 CLightDetectResistor ldr;
 time_t ntp_next_synk;
 CDisplayClock displayClock;
+CIntensity intensity;
 
 //US Eastern Time Zone (New York, Detroit)
 
@@ -85,8 +87,8 @@ time_t getRTCTime(){
 }
 
 void rtc_init(){
-
 	//--------RTC SETUP ------------
+	Serial.println("RTC SETUP");
 	rtc.Begin();
 
 	// if you are using ESP-01 then uncomment the line below to reset the pins to
@@ -94,8 +96,6 @@ void rtc_init(){
 	// Wire.begin(0, 2); // due to limited pins, use pin 0 and 2 for SDA, SCL
 
 	RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
-	Serial.println();
-
 	if (!rtc.IsDateTimeValid())
 	{
 	    // Common Cuases:
@@ -138,8 +138,18 @@ void rtc_init(){
 	rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
 
 }
+int ldr_get(){
+	return ldr.get();
+}
+void setIntensity(int level){
+	matrix.setIntensity(level);
+}
 
 void setup() {
+  Serial.begin(115200);
+  Serial.println();
+  Serial.println("Compiled " __DATE__ " " __TIME__);
+  Serial.println();
 
   matrix.setIntensity(1); // Use a value between 0 and 15 for brightness
   matrix.setRotation(0,1);
@@ -147,9 +157,11 @@ void setup() {
   matrix.setRotation(2,1);
   matrix.setRotation(3,1);
 
-  Serial.begin(115200);
-  Serial.println();
-  Serial.println();
+  matrix.fillScreen(LOW);
+  matrix.setTextColor(HIGH, LOW);
+  matrix.setTextSize(1);
+  matrix.print("Start");
+  matrix.write();
 
   // We start by connecting to a WiFi network
   Serial.print("Connecting to ");
@@ -157,13 +169,15 @@ void setup() {
   WiFi.begin(ssid, pass);
 
   //--------------
+  rtc_init();
   ntpTime.init();
   setSyncProvider(getRTCTime);
   setSyncInterval(SYNK_RTC/1000);
 
-  matrix.setTextColor(HIGH, LOW);
-  matrix.setTextSize(1);
-  matrix.print("test");
+  //----------------------
+  intensity.setGetEnviropment(ldr_get,0,1024);
+  intensity.setSetIntensity(setIntensity,0,15);
+  Serial.println("Setup done");
 }
 unsigned long period=0;
 wl_status_t wl_status= WL_IDLE_STATUS;
@@ -181,34 +195,21 @@ void loop() {
 		}
 
 	}
+	intensity.handle();
 
 	//update info
 	if(displayClock.isChangedMin()){
 		Serial.println(displayClock.getStrMin());
+		Serial.printf("LDR sensor %d , temperature ",	ldr.get());
+		Serial.print(rtc.GetTemperature().AsFloat());
+		Serial.println(" C");
+
+			matrix.fillScreen(LOW);
+			matrix.setCursor(0,0);
+			matrix.printf(displayClock.getStrMin());
+			matrix.write();
 	}
 
-
-//	if(0==(period%50)){//fast 0.5 sec
-//		int32 time;
-//		if(rtc.getTime(time))
-//	    {
-//	        // Common Cuases:
-//	        //    1) the battery on the device is low or even missing and the power line was disconnected
-//	        Serial.println("RTC lost confidence in the DateTime!");
-//	    }
-//	    RtcDateTime now;
-//	    now.InitWithEpoch32Time(time);
-//	    Serial.printf("%02u:%02u:%02u\n", now.Hour(),now.Minute(),now.Second());
-//	    matrix.fillScreen(LOW);
-//
-//		matrix.setCursor(0,0);
-//		matrix.printf("%02u:%02u", now.Hour(),now.Minute());
-//		matrix.write();
-//	}
-
-//	if(0==(period%(30*100))){
-//		Serial.printf("LDR sensor %d , temperature %lf C \n",	ldr.get(),rtc.GetTemperature());
-//	}
 
 
 }

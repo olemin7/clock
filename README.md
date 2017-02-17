@@ -14,6 +14,13 @@ clock with ntp synk
  https://github.com/JChristensen/Timezone.git
 # referenses
 schematic: https://circuits.io/circuits/3798057-net-clock-led
+gtest
+https://www.codeproject.com/Articles/811934/Cplusplus-unit-test-start-guide-how-to-set-up-Goog
+https://github.com/google/googletest.git
+arduino:
+https://github.com/arduino/Arduino/blob/master/build/shared/manpage.adoc
+
+
 
 # esp8266 reference
 http://www.kloppenborg.net/blog/microcontrollers/2016/08/02/getting-started-with-the-esp8266
