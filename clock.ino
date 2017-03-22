@@ -17,7 +17,7 @@
 #include "CIntensity.h"
 #include "FreeMono9pt7b.h"
 
-#if 0
+#if 1
 char ssid[] = "Guest1";  //  your network SSID (name)
 char pass[] = "MH-6346PQMS";       // your network password
 #else
@@ -27,20 +27,15 @@ char pass[] = "_RESTRICTED3db@ea";       // your network password
 #define DEBUG
 
 
-int pinCS = 2; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
+int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
 int numberOfHorizontalDisplays = 4;
 int numberOfVerticalDisplays = 1;
 
 const int32 SYNK_RTC=30*1000;
-const int32 SYNK_NTP=60*1000;
+const int32 SYNK_NTP=24*60*60*1000;// one per day
 int32 synk_ntp_count=0;
 
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
-
-int wait = 20; // In milliseconds
-
-int spacer = 1;
-int width = 5 + spacer; // The font width is 5 pixels
 
 RtcDS3231<TwoWire> rtc(Wire);
 NTPtime ntpTime;
@@ -147,19 +142,22 @@ void setIntensity(int level){
 }
 
 void setup() {
+
   Serial.begin(115200);
   Serial.println();
   Serial.println("Compiled " __DATE__ " " __TIME__);
   Serial.println();
 
-  matrix.setIntensity(1); // Use a value between 0 and 15 for brightness
+  delay(500);
+  matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
+
   matrix.setRotation(0,1);
   matrix.setRotation(1,1);
   matrix.setRotation(2,1);
   matrix.setRotation(3,1);
 
   matrix.setFont(&FreeMono9pt7b);
-
+  matrix.setTextWrap(false);
   matrix.fillScreen(LOW);
   matrix.setTextColor(HIGH, LOW);
   matrix.setTextSize(1);
@@ -176,7 +174,7 @@ void setup() {
   ntpTime.init();
   setSyncProvider(getRTCTime);
   setSyncInterval(SYNK_RTC/1000);
-
+  synk_ntp_count=0;
   //----------------------
   intensity.setGetEnviropment(ldr_get,0,1024);
   intensity.setSetIntensity(setIntensity,0,15);
@@ -186,6 +184,19 @@ unsigned long period=0;
 wl_status_t wl_status= WL_IDLE_STATUS;
 void loop() {
 
+	if(Serial.available()){
+		String inputString = "";
+		while (Serial.available()) {
+			// get the new byte:
+			inputString+= (char)Serial.read();
+		}
+		matrix.fillScreen(LOW);
+		matrix.setCursor(0,7);
+		char tt[50];
+		inputString.toCharArray(tt, 10);
+		matrix.print(tt);
+		matrix.write();
+	}
 	period++;
 	delay(10);
 
@@ -201,15 +212,16 @@ void loop() {
 	intensity.handle();
 
 	//update info
-	if(displayClock.isChangedMin()){
+	if(displayClock.isChangedMin())
+	{
 		Serial.println(displayClock.getStrMin());
 		Serial.printf("LDR sensor %d , temperature ",	ldr.get());
 		Serial.print(rtc.GetTemperature().AsFloat());
 		Serial.println(" C");
 
 			matrix.fillScreen(LOW);
-			matrix.setCursor(0,0);
-			matrix.printf(displayClock.getStrMin());
+			matrix.setCursor(0,7);
+			matrix.print(displayClock.getStrMin());
 			matrix.write();
 	}
 
