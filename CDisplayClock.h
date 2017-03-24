@@ -22,6 +22,7 @@ public:
   CDisplayClock();
   bool isChangedMin();
   char *getStrMin();
+  int getFullTime(char *Buff);
 };
 
 #endif /* CLOCK_CDISPLAYCLOCK_H_ */

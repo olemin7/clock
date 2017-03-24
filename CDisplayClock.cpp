@@ -8,6 +8,7 @@
 #include "CDisplayClock.h"
 
 const char CDisplayClock::formatMin[] PROGMEM = "%02u:%02u";
+const char formatTimeFull[] PROGMEM = "%u-%02u-%02u %u:%02u:%02u";
 const TimeChangeRule CDisplayClock::myDST PROGMEM = {"DST", Last, Sun,
                                                      Mar,   3,    +3 * 60};
 const TimeChangeRule CDisplayClock::mySTD PROGMEM = {"STD", Last, Sun,
@@ -30,4 +31,8 @@ int CDisplayClock::getStrMin(char *Buff) {
 char *CDisplayClock::getStrMin() {
   getStrMin(buffMin);
   return buffMin;
+}
+int CDisplayClock::getFullTime(char *Buff) {
+	time_t local = getLocalTime();
+	return sprintf_P(Buff, formatTimeFull, year(local),month(local),day(local),hour(local), minute(local),second(local));
 }

@@ -42,7 +42,7 @@ NTPtime ntpTime;
 CLightDetectResistor ldr;
 time_t ntp_next_synk;
 CDisplayClock displayClock;
-int aIntensityRation[][2] ={{0,0},{20,2},{40,3}};
+int aIntensityRation[][2] ={{10,0},{300,1},{1000,2}};
 CIntensity intensity(aIntensityRation,3);
 
 //US Eastern Time Zone (New York, Detroit)
@@ -64,7 +64,7 @@ time_t getRTCTime(){
 		ntp=ntpTime.getTime();
 		if(ntp){
 			synk_ntp_count=SYNK_NTP/SYNK_RTC;
-			Serial.printf("GMT %02u:%02u:%02u done\n", hour(ntp),minute(ntp),second(ntp));
+			Serial.printf("mtp GMT %02u:%02u:%02u done\n", hour(ntp),minute(ntp),second(ntp));
 
 			RtcDateTime dt;
 			dt.InitWithEpoch32Time(ntp);
@@ -185,19 +185,6 @@ unsigned long period=0;
 wl_status_t wl_status= WL_IDLE_STATUS;
 void loop() {
 
-	if(Serial.available()){
-		String inputString = "";
-		while (Serial.available()) {
-			// get the new byte:
-			inputString+= (char)Serial.read();
-		}
-		matrix.fillScreen(LOW);
-		matrix.setCursor(0,7);
-		char tt[50];
-		inputString.toCharArray(tt, 10);
-		matrix.print(tt);
-		matrix.write();
-	}
 	period++;
 	delay(10);
 
@@ -210,22 +197,25 @@ void loop() {
 		}
 
 	}
-	intensity.handle();
+
 
 	//update info
 	if(displayClock.isChangedMin())
 	{
-		Serial.println(displayClock.getStrMin());
-		Serial.printf("LDR sensor %d , temperature ",	ldr.get());
-		Serial.print(rtc.GetTemperature().AsFloat());
-		Serial.println(" C");
-
 			matrix.fillScreen(LOW);
 			matrix.setCursor(0,7);
 			matrix.print(displayClock.getStrMin());
 			matrix.write();
 	}
 
-
+	if((period%500)==0){//5 sec
+		char tt[20];
+		displayClock.getFullTime(tt);
+		Serial.println(tt);
+		Serial.printf("LDR sensor %d , temperature ",	ldr.get());
+		Serial.print(rtc.GetTemperature().AsFloat());
+		Serial.println(" C");
+		intensity.handle();
+	}
 
 }
