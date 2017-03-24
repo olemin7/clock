@@ -42,7 +42,8 @@ NTPtime ntpTime;
 CLightDetectResistor ldr;
 time_t ntp_next_synk;
 CDisplayClock displayClock;
-CIntensity intensity;
+int aIntensityRation[][2] ={{0,0},{20,2},{40,3}};
+CIntensity intensity(aIntensityRation,3);
 
 //US Eastern Time Zone (New York, Detroit)
 
@@ -176,8 +177,8 @@ void setup() {
   setSyncInterval(SYNK_RTC/1000);
   synk_ntp_count=0;
   //----------------------
-  intensity.setGetEnviropment(ldr_get,0,1024);
-  intensity.setSetIntensity(setIntensity,0,15);
+  intensity.setGetEnviropment(ldr_get);
+  intensity.setSetIntensity(setIntensity);
   Serial.println("Setup done");
 }
 unsigned long period=0;
