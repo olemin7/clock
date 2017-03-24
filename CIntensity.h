@@ -7,7 +7,12 @@
 
 #ifndef CLOCK_CINTENSITY_H_
 #define CLOCK_CINTENSITY_H_
-#include <Arduino.h>
+#ifndef TEST
+	#include <Arduino.h>
+#else
+	#include <stddef.h>
+	#include <iostream>
+#endif
 typedef int (*tGetEnviropment)();
 typedef void (*tSetIntensity)(int);
 

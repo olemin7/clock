@@ -16,3 +16,8 @@ void CIntensity::setGetEnviropment(tGetEnviropment func, int min, int max) {}
 void CIntensity::handle() {}
 
 void CIntensity::setSetIntensity(tSetIntensity func, int min, int max) {}
+
+int main(){
+std::cout<<"sdfsdfsdf\n";
+	return 0;
+}
