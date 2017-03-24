@@ -15,11 +15,12 @@ class CDisplayClock {
   static const TimeChangeRule myDST;
   static const TimeChangeRule mySTD;
   Timezone myTZ;
-  time_t getLocalTime();
   int getStrMin(char *Buff);
 
 public:
   CDisplayClock();
+  time_t getLocalTime();
+  time_t toUTC(time_t local);
   bool isChangedMin();
   char *getStrMin();
   int getFullTime(char *Buff);

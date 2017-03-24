@@ -18,7 +18,7 @@ CDisplayClock::CDisplayClock() : myTZ(myDST, mySTD) {
   memset(buffMin, 0, sizeof(buffMin));
 }
 time_t CDisplayClock::getLocalTime() { return myTZ.toLocal(now()); }
-
+time_t CDisplayClock::toUTC(time_t local){ return myTZ.toUTC(local); }
 bool CDisplayClock::isChangedMin() {
   char tmp[sizeof(buffMin)];
   getStrMin(tmp);

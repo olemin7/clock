@@ -92,7 +92,7 @@ void rtc_init(){
 	// the available pins for SDA, SCL
 	// Wire.begin(0, 2); // due to limited pins, use pin 0 and 2 for SDA, SCL
 
-	RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
+	RtcDateTime compiled = displayClock.toUTC(RtcDateTime(__DATE__, __TIME__));
 	if (!rtc.IsDateTimeValid())
 	{
 	    // Common Cuases:
