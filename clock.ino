@@ -4,6 +4,11 @@
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+#include <ESP8266HTTPUpdateServer.h>
+
 #include <TimeLib.h>
 
 #include <Wire.h> // must be included here so that Arduino library object file references work
@@ -17,13 +22,19 @@
 #include "CIntensity.h"
 #include "FreeMono9pt7b.h"
 
-#if 1
-char ssid[] = "Guest1";  //  your network SSID (name)
-char pass[] = "MH-6346PQMS";       // your network password
-#else
-char ssid[] = "ITPwifi";  //  your network SSID (name)
-char pass[] = "_RESTRICTED3db@ea";       // your network password
-#endif
+#include "secret.h"
+//#ifndef SECRET_H_
+//#define SECRET_H_
+//const char* ssid = "";
+//const char* password = "@ea";
+//const char* mqtt_server = "";
+//const char* Write_API_Key="";
+//const int mqtt_port=;
+//const int channelID = ;
+//const char* update_username = "";
+//const char* update_password = "";
+//#endif
+
 #define DEBUG
 
 
@@ -35,6 +46,9 @@ const int32 SYNK_RTC=30*1000;
 const int32 SYNK_NTP=24*60*60*1000;// one per day
 int32 synk_ntp_count=0;
 
+const char* host = "esp8266-webupdate";
+const char* update_path = "/firmware";
+
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
 RtcDS3231<TwoWire> rtc(Wire);
@@ -44,6 +58,9 @@ time_t ntp_next_synk;
 CDisplayClock displayClock;
 int aIntensityRation[][2] ={{10,0},{300,1},{1000,2}};
 CIntensity intensity(aIntensityRation,3);
+
+ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
 
 //US Eastern Time Zone (New York, Detroit)
 
@@ -168,7 +185,7 @@ void setup() {
   // We start by connecting to a WiFi network
   Serial.print("Connecting to ");
   Serial.println(ssid);
-  WiFi.begin(ssid, pass);
+  WiFi.begin(ssid, password);
 
   //--------------
   rtc_init();
@@ -179,12 +196,26 @@ void setup() {
   //----------------------
   intensity.setGetEnviropment(ldr_get);
   intensity.setSetIntensity(setIntensity);
+
+   while(WiFi.waitForConnectResult() != WL_CONNECTED){
+    WiFi.begin(ssid, password);
+    Serial.println("WiFi failed, retrying.");
+  }
+
+  MDNS.begin(host);
+
+  httpUpdater.setup(&httpServer, update_path, update_username, update_password);
+  httpServer.begin();
+
+  MDNS.addService("http", "tcp", 80);
+  Serial.printf("HTTPUpdateServer ready! Open http://%s.local%s in your browser and login with username '%s' and password '%s'\n", host, update_path, update_username, update_password);
+  
   Serial.println("Setup done");
 }
 unsigned long period=0;
 wl_status_t wl_status= WL_IDLE_STATUS;
 void loop() {
-
+  httpServer.handleClient();
 	period++;
 	delay(10);
 

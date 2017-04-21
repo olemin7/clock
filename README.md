@@ -1,6 +1,7 @@
 # clock
 clock with ntp synk
-
+# Board
+http://arduino.esp8266.com/stable/package_esp8266com_index.json
 # libs
  1 "Rtc by Makuna"
  https://github.com/Makuna/Rtc.git
@@ -19,8 +20,6 @@ https://www.codeproject.com/Articles/811934/Cplusplus-unit-test-start-guide-how-
 https://github.com/google/googletest.git
 arduino:
 https://github.com/arduino/Arduino/blob/master/build/shared/manpage.adoc
-
-
 
 # esp8266 reference
 http://www.kloppenborg.net/blog/microcontrollers/2016/08/02/getting-started-with-the-esp8266

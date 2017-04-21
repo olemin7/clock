@@ -11,8 +11,8 @@
 #ifndef TEST
 #include <Arduino.h>
 #else
-#include <stddef.h>
 #include <iostream>
+#include <stddef.h>
 #endif
 typedef int (*tGetEnviropment)();
 typedef void (*tSetIntensity)(int);
@@ -21,10 +21,11 @@ typedef int tIntensityRation[2];
 class CIntensity {
   tGetEnviropment getEnviropmentPtr = NULL;
   tSetIntensity setIntensityPtr = NULL;
-  tIntensityRation *pIntensityRation=NULL;
-  int count=0;
+  tIntensityRation *pIntensityRation = NULL;
+  int count = 0;
+
 public:
-  CIntensity(tIntensityRation *aIntensityRation,int count);
+  CIntensity(tIntensityRation *aIntensityRation, int count);
   void handle();
   void setGetEnviropment(tGetEnviropment func);
   void setSetIntensity(tSetIntensity func);
