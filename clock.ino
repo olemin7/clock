@@ -5,9 +5,6 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-#include <ESP8266HTTPUpdateServer.h>
 
 #include <TimeLib.h>
 
@@ -21,6 +18,8 @@
 #include "CDisplayClock.h"
 #include "CIntensity.h"
 #include "FreeMono9pt7b.h"
+
+#include "ota.h"
 
 #include "secret.h"
 //#ifndef SECRET_H_
@@ -37,7 +36,6 @@
 
 #define DEBUG
 
-
 int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
 int numberOfHorizontalDisplays = 4;
 int numberOfVerticalDisplays = 1;
@@ -46,8 +44,6 @@ const int32 SYNK_RTC=30*1000;
 const int32 SYNK_NTP=24*60*60*1000;// one per day
 int32 synk_ntp_count=0;
 
-const char* host = "esp8266-webupdate";
-const char* update_path = "/firmware";
 
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
@@ -58,9 +54,6 @@ time_t ntp_next_synk;
 CDisplayClock displayClock;
 int aIntensityRation[][2] ={{10,0},{300,1},{1000,2}};
 CIntensity intensity(aIntensityRation,3);
-
-ESP8266WebServer httpServer(80);
-ESP8266HTTPUpdateServer httpUpdater;
 
 //US Eastern Time Zone (New York, Detroit)
 
@@ -202,20 +195,13 @@ void setup() {
     Serial.println("WiFi failed, retrying.");
   }
 
-  MDNS.begin(host);
-
-  httpUpdater.setup(&httpServer, update_path, update_username, update_password);
-  httpServer.begin();
-
-  MDNS.addService("http", "tcp", 80);
-  Serial.printf("HTTPUpdateServer ready! Open http://%s.local%s in your browser and login with username '%s' and password '%s'\n", host, update_path, update_username, update_password);
-  
+  ota_begin("clock" __DATE__,ota_password);
   Serial.println("Setup done");
 }
 unsigned long period=0;
 wl_status_t wl_status= WL_IDLE_STATUS;
 void loop() {
-  httpServer.handleClient();
+	ota_loop();
 	period++;
 	delay(10);
 

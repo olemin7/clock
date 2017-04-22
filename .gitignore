@@ -1,2 +1,6 @@
 secret.h
-obj
+
+.cproject
+.project
+.settings
+obj/
