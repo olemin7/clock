@@ -1,44 +1,13 @@
-#include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Max72xxPanel.h>
+#include "clock.h"
 
-#include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
-#include <WiFiClient.h>
+const int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
+const int numberOfHorizontalDisplays = 4;
+const int numberOfVerticalDisplays = 1;
 
-#include <TimeLib.h>
+const int DHTPIN= 4;//gpio16    // what digital pin we're connected to
+const int DHTTYPE= DHT22;   // DHT 22  (AM2302), AM2321
 
-#include <Wire.h> // must be included here so that Arduino library object file references work
-#include <RtcDS3231.h>
-#include <pgmspace.h>
-#include <time.h>
-
-#include "NTPtime.h"
-#include "CLightDetectResistor.h"
-#include "CDisplayClock.h"
-#include "CIntensity.h"
-#include "FreeMono9pt7b.h"
-
-#include "ota.h"
-
-#include "secret.h"
-//#ifndef SECRET_H_
-//#define SECRET_H_
-//const char* ssid = "";
-//const char* password = "@ea";
-//const char* mqtt_server = "";
-//const char* Write_API_Key="";
-//const int mqtt_port=;
-//const int channelID = ;
-//const char* update_username = "";
-//const char* update_password = "";
-//#endif
-
-#define DEBUG
-
-int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
-int numberOfHorizontalDisplays = 4;
-int numberOfVerticalDisplays = 1;
+const int pinButton=18;//|GPIO0
 
 const int32 SYNK_RTC=30*1000;
 const int32 SYNK_NTP=24*60*60*1000;// one per day
@@ -52,9 +21,9 @@ NTPtime ntpTime;
 CLightDetectResistor ldr;
 time_t ntp_next_synk;
 CDisplayClock displayClock;
-int aIntensityRation[][2] ={{10,0},{300,1},{1000,2}};
+int aIntensityRation[][2] ={{10,0},{300,1},{1000,3}};
 CIntensity intensity(aIntensityRation,3);
-
+DHT dht(DHTPIN, DHTTYPE);
 //US Eastern Time Zone (New York, Detroit)
 
 time_t getRTCTime(){
@@ -176,28 +145,34 @@ void setup() {
   matrix.write();
 
   // We start by connecting to a WiFi network
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.print("WiFi Connecting to ");
+  Serial.print(ssid);
   WiFi.begin(ssid, password);
 
-  //--------------
-  rtc_init();
-  ntpTime.init();
-  setSyncProvider(getRTCTime);
-  setSyncInterval(SYNK_RTC/1000);
-  synk_ntp_count=0;
-  //----------------------
-  intensity.setGetEnviropment(ldr_get);
-  intensity.setSetIntensity(setIntensity);
+  if(WiFi.waitForConnectResult() != WL_CONNECTED){
+   Serial.println(". Failed");
+	}else{
+		Serial.print(". Connected, IP address: ");
+		Serial.println(WiFi.localIP());
+	}
+	//--------------
+	rtc_init();
+	ntpTime.init();
+	setSyncProvider(getRTCTime);
+	setSyncInterval(SYNK_RTC/1000);
+	synk_ntp_count=0;
+	//----------------------
+	intensity.setGetEnviropment(ldr_get);
+	intensity.setSetIntensity(setIntensity);
 
-   while(WiFi.waitForConnectResult() != WL_CONNECTED){
-    WiFi.begin(ssid, password);
-    Serial.println("WiFi failed, retrying.");
-  }
-
-  ota_begin("clock" __DATE__,ota_password);
-  Serial.println("Setup done");
+	ota_begin("clock" __DATE__,ota_password);
+	//------------------
+	dht.begin();
+	//-----------------
+	Serial.println("Setup done");
 }
+
+
 unsigned long period=0;
 wl_status_t wl_status= WL_IDLE_STATUS;
 void loop() {
@@ -212,9 +187,7 @@ void loop() {
 			  Serial.print("WiFi connected, IP address: ");
 			  Serial.println(WiFi.localIP());
 		}
-
 	}
-
 
 	//update info
 	if(displayClock.isChangedMin())

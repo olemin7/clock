@@ -12,7 +12,9 @@ http://arduino.esp8266.com/stable/package_esp8266com_index.json
  3.
  https://github.com/PaulStoffregen/Time.git
  4.
- https://github.com/JChristensen/Timezone.git
+ https://github.com/JChristensen/Timezone.git 
+ 5.
+ https://github.com/amin7/libpack
 # referenses
 schematic: https://circuits.io/circuits/3798057-net-clock-led
 gtest
