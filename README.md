@@ -15,6 +15,13 @@ http://arduino.esp8266.com/stable/package_esp8266com_index.json
  https://github.com/JChristensen/Timezone.git 
  5.
  https://github.com/amin7/libpack
+ 6.
+ https://github.com/knolleary/pubsubclient.git
+ 7.1
+ https://github.com/adafruit/Adafruit_Sensor.git 	
+ 7.2
+ https://github.com/adafruit/DHT-sensor-library.git
+
 # referenses
 schematic: https://circuits.io/circuits/3798057-net-clock-led
 gtest
