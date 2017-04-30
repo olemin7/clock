@@ -13,8 +13,7 @@
 #include <Max72xxPanel.h>
 
 #include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
-#include <WiFiClient.h>
+
 
 #include <TimeLib.h>
 
@@ -22,7 +21,7 @@
 #include <RtcDS3231.h>
 #include <pgmspace.h>
 #include <time.h>
-#include <PubSubClient.h>
+
 
 #include "NTPtime.h"
 #include "CLightDetectResistor.h"
@@ -33,6 +32,8 @@
 
 #include "libpack.h"
 #include "ota.h"
+
+#include "CMQTT.h"
 
 #include "secret.h"
 //#ifndef SECRET_H_

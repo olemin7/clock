@@ -21,8 +21,8 @@ void CIntensity::handle() {
     return;
 
   int env = getEnviropmentPtr();
-  env = getIntensity(env);
-  setIntensityPtr(env);
+  int intens = getIntensity(env);
+  setIntensityPtr(intens);
 }
 
 void CIntensity::setSetIntensity(tSetIntensity func) { setIntensityPtr = func; }
@@ -40,12 +40,6 @@ int CIntensity::getIntensity(int Enviropment) {
 }
 
 #ifdef TEST
-#define EXPECT_EQ(a, b)                                                        \
-  if (a != b) {                                                                \
-    std::cout << "'" << #a << "' is '" << a << "' expected '" << b << "'\n"    \
-              << __FILE__ << "(" << __FUNCTION__ << ":" << __LINE__ << ")\n";  \
-    return 1;                                                                  \
-  }
 
 int test1() {
 

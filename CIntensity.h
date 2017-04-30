@@ -8,6 +8,8 @@
 #ifndef CLOCK_CINTENSITY_H_
 #define CLOCK_CINTENSITY_H_
 //#define TEST
+#include "libpack.h"
+
 #ifndef TEST
 #include <Arduino.h>
 #else

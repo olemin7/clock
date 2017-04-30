@@ -36,6 +36,9 @@ int32 NTPtime::parceAsEpoch() {
 }
 
 time_t NTPtime::getTime() {
+	if(WL_CONNECTED!=WiFi.status()){
+		return 0;
+	}
   sendNTPpacket();
   // wait to see if a reply is available
   int i = 100;

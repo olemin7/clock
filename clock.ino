@@ -13,6 +13,15 @@ const int32 SYNK_RTC=30*1000;
 const int32 SYNK_NTP=24*60*60*1000;// one per day
 int32 synk_ntp_count=0;
 
+const long MQTT_REFRESH_PERIOD=15*60*1000;
+
+//channels/<channelID>/publish/fields/field<fieldnumber>/<apikey>
+const char* mqtt_post_field_single="channels/%d/publish/fields/field%d/%s";
+
+//channels/<channelID>/publish/<apikey>
+//field1=100&field2=50&lat=30.61&long=40.3
+const char* mqtt_post_fields="channels/%d/publish/%s";
+
 
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
@@ -25,6 +34,9 @@ int aIntensityRation[][2] ={{10,0},{300,1},{1000,3}};
 CIntensity intensity(aIntensityRation,3);
 DHT dht(DHTPIN, DHTTYPE);
 //US Eastern Time Zone (New York, Detroit)
+
+CMQTT mqtt(mqtt_server, mqtt_port);
+COTA ota;
 
 time_t getRTCTime(){
 #ifdef DEBUG
@@ -121,8 +133,32 @@ void setIntensity(int level){
 	matrix.setIntensity(level);
 }
 
+void setup_wifi() {
+
+  delay(10);
+  // We start by connecting to a WiFi network
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(wifi_ssid);
+
+  WiFi.begin(wifi_ssid, wifi_password);
+  if(WiFi.waitForConnectResult() != WL_CONNECTED){
+	  Serial.println(". Failed");
+  }else{
+		Serial.print(". Connected, IP address: ");
+		Serial.println(WiFi.localIP());
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+
 void setup() {
 
+  pinMode(pinButton, INPUT);
   Serial.begin(115200);
   Serial.println();
   Serial.println("Compiled " __DATE__ " " __TIME__);
@@ -144,17 +180,8 @@ void setup() {
   matrix.print("Start");
   matrix.write();
 
-  // We start by connecting to a WiFi network
-  Serial.print("WiFi Connecting to ");
-  Serial.print(ssid);
-  WiFi.begin(ssid, password);
+  	setup_wifi();
 
-  if(WiFi.waitForConnectResult() != WL_CONNECTED){
-   Serial.println(". Failed");
-	}else{
-		Serial.print(". Connected, IP address: ");
-		Serial.println(WiFi.localIP());
-	}
 	//--------------
 	rtc_init();
 	ntpTime.init();
@@ -165,18 +192,23 @@ void setup() {
 	intensity.setGetEnviropment(ldr_get);
 	intensity.setSetIntensity(setIntensity);
 
-	ota_begin("clock" __DATE__,ota_password);
+
 	//------------------
 	dht.begin();
 	//-----------------
+	ota.begin("clock" __DATE__,ota_password);
 	Serial.println("Setup done");
 }
 
 
 unsigned long period=0;
 wl_status_t wl_status= WL_IDLE_STATUS;
+long nextMsgMQTT=0;
+long nextStat=0;
 void loop() {
-	ota_loop();
+	const long now = millis();
+	ota.loop();
+	mqtt.loop();
 	period++;
 	delay(10);
 
@@ -198,14 +230,44 @@ void loop() {
 			matrix.write();
 	}
 
-	if((period%500)==0){//5 sec
+	if(now>=nextStat){
+		nextStat=now+5000;
 		char tt[20];
 		displayClock.getFullTime(tt);
 		Serial.println(tt);
 		Serial.printf("LDR sensor %d , temperature ",	ldr.get());
 		Serial.print(rtc.GetTemperature().AsFloat());
 		Serial.println(" C");
+		Serial.print("DHT ");
+		Serial.println(dht.readTemperature());
+		Serial.print("button ");
+		Serial.println(	digitalRead(pinButton));
 		intensity.handle();
+	}
+
+	if(now>=nextMsgMQTT){
+		float dht_readTemperature=dht.readTemperature();
+		float dht_readHumidity=dht.readHumidity();
+
+//		if (isnan(dht_readTemperature) || isnan(dht_readHumidity)) {
+//		      Serial.println("Failed to read from sensor!");
+//		}
+	//	nextMsgMQTT=now+MQTT_REFRESH_PERIOD;
+		nextMsgMQTT=now+5*1000;
+
+		String topic;
+
+		topic="channels/"+String(House_channelID)+"/publish/"+House_Write_API_Key;
+		String data;
+		data="field1="+String(dht_readTemperature,1);
+		data+="&field2="+String(dht_readHumidity,1);
+	//	mqtt.publish(topic, data);
+		Serial.print("topic= ");
+		Serial.print(topic);
+		Serial.print(" [");
+		Serial.print(data);
+		Serial.println("]");
+
 	}
 
 }
