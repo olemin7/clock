@@ -35,7 +35,7 @@ CIntensity intensity(aIntensityRation,3);
 DHT dht(DHTPIN, DHTTYPE);
 //US Eastern Time Zone (New York, Detroit)
 
-CMQTT mqtt(mqtt_server, mqtt_port);
+CMQTT mqtt;
 COTA ota;
 
 time_t getRTCTime(){
@@ -180,8 +180,8 @@ void setup() {
   matrix.print("Start");
   matrix.write();
 
-  	setup_wifi();
-
+ 	setup_wifi();
+  mqtt.setup(mqtt_server, mqtt_port);
 	//--------------
 	rtc_init();
 	ntpTime.init();
@@ -210,7 +210,7 @@ void loop() {
 	ota.loop();
 	mqtt.loop();
 	period++;
-	delay(10);
+//	delay(10);
 
 	if(wl_status!=WiFi.status()){
 		wl_status=WiFi.status();
@@ -254,14 +254,15 @@ void loop() {
 //		}
 	//	nextMsgMQTT=now+MQTT_REFRESH_PERIOD;
 		nextMsgMQTT=now+5*1000;
-
+dht_readTemperature=10;
+dht_readHumidity=50;
 		String topic;
 
 		topic="channels/"+String(House_channelID)+"/publish/"+House_Write_API_Key;
 		String data;
 		data="field1="+String(dht_readTemperature,1);
 		data+="&field2="+String(dht_readHumidity,1);
-	//	mqtt.publish(topic, data);
+		mqtt.publish(topic, data);
 		Serial.print("topic= ");
 		Serial.print(topic);
 		Serial.print(" [");

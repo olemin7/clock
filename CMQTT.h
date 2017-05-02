@@ -16,7 +16,8 @@ class CMQTT {
 	long reconnectTimeOut=0;
 	void reconnect();
 public:
-	CMQTT(const char * domain, uint16_t port);
+	CMQTT();
+  bool setup(const char * domain, uint16_t port);
 	void loop();
 	bool publish(const String &topic, const String &message);
 };
