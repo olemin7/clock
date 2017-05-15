@@ -238,8 +238,6 @@ void loop() {
 		Serial.printf("LDR sensor %d , temperature ",	ldr.get());
 		Serial.print(rtc.GetTemperature().AsFloat());
 		Serial.println(" C");
-		Serial.print("DHT ");
-		Serial.println(dht.readTemperature());
 		Serial.print("button ");
 		Serial.println(	digitalRead(pinButton));
 		intensity.handle();
@@ -249,26 +247,26 @@ void loop() {
 		float dht_readTemperature=dht.readTemperature();
 		float dht_readHumidity=dht.readHumidity();
 
-//		if (isnan(dht_readTemperature) || isnan(dht_readHumidity)) {
-//		      Serial.println("Failed to read from sensor!");
-//		}
-	//	nextMsgMQTT=now+MQTT_REFRESH_PERIOD;
-		nextMsgMQTT=now+5*1000;
-dht_readTemperature=10;
-dht_readHumidity=50;
-		String topic;
+		if (isnan(dht_readTemperature) || isnan(dht_readHumidity)) {
+		      Serial.println("Failed to read from sensor!");
+          nextMsgMQTT=now+5*1000;
+		}else{
+		  nextMsgMQTT=now+MQTT_REFRESH_PERIOD;
 
-		topic="channels/"+String(House_channelID)+"/publish/"+House_Write_API_Key;
-		String data;
-		data="field1="+String(dht_readTemperature,1);
-		data+="&field2="+String(dht_readHumidity,1);
-		mqtt.publish(topic, data);
-		Serial.print("topic= ");
-		Serial.print(topic);
-		Serial.print(" [");
-		Serial.print(data);
-		Serial.println("]");
-
+  		String topic;
+  
+  		topic="channels/"+String(House_channelID)+"/publish/"+House_Write_API_Key;
+  		String data;
+  		data="field1="+String(dht_readTemperature,1);
+  		data+="&field2="+String(dht_readHumidity,1);
+  		mqtt.publish(topic, data);
+		
+  		Serial.print("topic= ");
+  		Serial.print(topic);
+  		Serial.print(" [");
+  		Serial.print(data);
+  		Serial.println("]");
+		}
 	}
 
 }

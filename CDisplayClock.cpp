@@ -7,7 +7,7 @@
 
 #include "CDisplayClock.h"
 
-const char CDisplayClock::formatMin[] PROGMEM = "%02u:%02u";
+const char CDisplayClock::formatMin[] PROGMEM = "%2u:%02u";
 const char formatTimeFull[] PROGMEM = "%u-%02u-%02u %u:%02u:%02u";
 const TimeChangeRule CDisplayClock::myDST PROGMEM = {"DST", Last, Sun,
                                                      Mar,   3,    +3 * 60};
