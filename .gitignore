@@ -1,6 +1,4 @@
 secret.h
 
-.cproject
-.project
-.settings
 obj/
+/Release/

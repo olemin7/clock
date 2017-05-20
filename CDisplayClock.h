@@ -7,6 +7,7 @@
 
 #ifndef CLOCK_CDISPLAYCLOCK_H_
 #define CLOCK_CDISPLAYCLOCK_H_
+#include <TimeLib.h>
 #include <Timezone.h>
 
 class CDisplayClock {
