@@ -4,10 +4,9 @@ const int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf h
 const int numberOfHorizontalDisplays = 4;
 const int numberOfVerticalDisplays = 1;
 
-const int DHTPIN= 4;//gpio16    // what digital pin we're connected to
-const int DHTTYPE= DHT22;   // DHT 22  (AM2302), AM2321
+const int DHTPIN = 2; //gpio16    // what digital pin we're connected to
 
-const int pinButton=18;//|GPIO0
+const int pinButton = D3; //|GPIO0
 
 const int32 SYNK_RTC=30*1000;
 const int32 SYNK_NTP=24*60*60*1000;// one per day
@@ -32,7 +31,7 @@ time_t ntp_next_synk;
 CDisplayClock displayClock;
 int aIntensityRation[][2] ={{10,0},{300,1},{1000,3}};
 CIntensity intensity(aIntensityRation,3);
-DHT dht(DHTPIN, DHTTYPE);
+DHT dht(DHTPIN, DHT22);
 //US Eastern Time Zone (New York, Detroit)
 
 CMQTT mqtt;
@@ -133,55 +132,37 @@ void setIntensity(int level){
 	matrix.setIntensity(level);
 }
 
-void setup_wifi() {
 
-  delay(10);
-  // We start by connecting to a WiFi network
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(wifi_ssid);
-
-  WiFi.begin(wifi_ssid, wifi_password);
-  if(WiFi.waitForConnectResult() != WL_CONNECTED){
-	  Serial.println(". Failed");
-  }else{
-		Serial.print(". Connected, IP address: ");
-		Serial.println(WiFi.localIP());
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-}
 
 
 void setup() {
 
-  pinMode(pinButton, INPUT);
-  Serial.begin(115200);
-  Serial.println();
-  Serial.println("Compiled " __DATE__ " " __TIME__);
-  Serial.println();
+    pinMode(pinButton, INPUT);
+    Serial.begin(115200);
+    delay(500);
+    Serial.println();
+    Serial.println("Compiled " __DATE__ " " __TIME__);
+    Serial.println();
 
-  delay(500);
-  matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
+    hw_info(Serial);
 
-  matrix.setRotation(0,1);
-  matrix.setRotation(1,1);
-  matrix.setRotation(2,1);
-  matrix.setRotation(3,1);
+    matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
 
-  matrix.setFont(&FreeMono9pt7b);
-  matrix.setTextWrap(false);
-  matrix.fillScreen(LOW);
-  matrix.setTextColor(HIGH, LOW);
-  matrix.setTextSize(1);
-  matrix.print("Start");
-  matrix.write();
+    matrix.setRotation(0, 1);
+    matrix.setRotation(1, 1);
+    matrix.setRotation(2, 1);
+    matrix.setRotation(3, 1);
 
- 	setup_wifi();
-  mqtt.setup(mqtt_server, mqtt_port);
+    matrix.setFont(&FreeMono9pt7b);
+    matrix.setTextWrap(false);
+    matrix.fillScreen(LOW);
+    matrix.setTextColor(HIGH, LOW);
+    matrix.setTextSize(1);
+    matrix.print("Start");
+    matrix.write();
+
+    setup_wifi(wifi_ssid, wifi_password);
+    mqtt.setup(mqtt_server, mqtt_port);
 	//--------------
 	rtc_init();
 	ntpTime.init();
@@ -197,20 +178,19 @@ void setup() {
 	dht.begin();
 	//-----------------
 	ota.begin("clock" __DATE__,ota_password);
+    mqtt.setClientID("clock");
 	Serial.println("Setup done");
 }
 
 
-unsigned long period=0;
 wl_status_t wl_status= WL_IDLE_STATUS;
 long nextMsgMQTT=0;
 long nextStat=0;
+long nextSec = 0;
 void loop() {
 	const long now = millis();
 	ota.loop();
 	mqtt.loop();
-	period++;
-//	delay(10);
 
 	if(wl_status!=WiFi.status()){
 		wl_status=WiFi.status();
@@ -222,12 +202,13 @@ void loop() {
 	}
 
 	//update info
-	if(displayClock.isChangedMin())
+    if (now >= nextSec)
 	{
-			matrix.fillScreen(LOW);
-			matrix.setCursor(0,7);
-			matrix.print(displayClock.getStrMin());
-			matrix.write();
+        matrix.fillScreen(LOW);
+        matrix.setCursor(0, 7);
+        matrix.print(displayClock.getStrMin());
+        matrix.write();
+        nextSec = now + 5000;
 	}
 
 	if(now>=nextStat){
@@ -246,7 +227,10 @@ void loop() {
 	if(now>=nextMsgMQTT){
 		float dht_readTemperature=dht.readTemperature();
 		float dht_readHumidity=dht.readHumidity();
-
+        Serial.print("t=");
+        Serial.print(dht_readTemperature);
+        Serial.print(" h=");
+        Serial.println(dht_readTemperature);
 		if (isnan(dht_readTemperature) || isnan(dht_readHumidity)) {
 		      Serial.println("Failed to read from sensor!");
           nextMsgMQTT=now+5*1000;

@@ -28,24 +28,25 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 }
 
 CMQTT::CMQTT():client(espClient) {
+    setClientID("ESP8266Client" __DATE__ __TIME__); //must be uniq for server
 }
+
+
 bool CMQTT::setup(const char * domain, uint16_t port){
-  Serial.print("MQTT Server:");
-  Serial.print(domain);
-  Serial.print(" port:");
-  Serial.println(port);
-  client.setServer(domain, port);
-  client.setCallback(mqtt_callback);
+    Serial.print("MQTT Server:");
+    Serial.print(domain);
+    Serial.print(" port:");
+    Serial.println(port);
+    client.setServer(domain, port);
+    client.setCallback(mqtt_callback);
 }
 
 void CMQTT::loop(){
-//    Serial.print("client.state=");
-//    Serial.println(client.state());
-	  if (!client.connected()) {
-	    reconnect();
-	    return;
-	  }
-	  client.loop();
+    if (!client.connected()) {
+        reconnect();
+        return;
+    }
+    client.loop();
 }
 void CMQTT::reconnect() {
    if(client.connected())
@@ -55,7 +56,7 @@ void CMQTT::reconnect() {
 	   return;
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect("ESP8266Client1")) {
+    if (client.connect(mClientID)) {
       Serial.println("connected");
       // Once connected, publish an announcement...
       //client.publish("outTopic", "hello world");
