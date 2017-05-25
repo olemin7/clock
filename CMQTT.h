@@ -24,7 +24,7 @@ public:
         Serial.print("ClientID= ");
         Serial.println(aClientID);
     }
-	bool setup(const char * domain, uint16_t port);
+    void setup(const char * domain, uint16_t port);
 	void loop();
 	bool publish(const String &topic, const String &message);
 };

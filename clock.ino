@@ -4,13 +4,11 @@ const int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf h
 const int numberOfHorizontalDisplays = 4;
 const int numberOfVerticalDisplays = 1;
 
-const int DHTPIN = 2; //gpio16    // what digital pin we're connected to
+const int DHTPIN = D4;
+const int pinButton = D3;
 
-const int pinButton = D3; //|GPIO0
-
-const int32 SYNK_RTC=30*1000;
-const int32 SYNK_NTP=24*60*60*1000;// one per day
-int32 synk_ntp_count=0;
+const int32 SYNK_RTC = 60 * 60 * 1000; //one per hour
+const unsigned long SYNK_NTP_PERIOD = 24 * 60 * 60 * 1000; // one per day
 
 const long MQTT_REFRESH_PERIOD=15*60*1000;
 
@@ -27,7 +25,6 @@ Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVe
 RtcDS3231<TwoWire> rtc(Wire);
 NTPtime ntpTime;
 CLightDetectResistor ldr;
-time_t ntp_next_synk;
 CDisplayClock displayClock;
 int aIntensityRation[][2] ={{10,0},{300,1},{1000,3}};
 CIntensity intensity(aIntensityRation,3);
@@ -41,28 +38,6 @@ time_t getRTCTime(){
 #ifdef DEBUG
 	Serial.println("getRTCTime");
 #endif
-	if(synk_ntp_count)
-		synk_ntp_count--;
-	if((WL_CONNECTED==WiFi.status()) &&(
-			(0==synk_ntp_count)
-			||(!rtc.IsDateTimeValid())
-			)){
-		#ifdef DEBUG
-			Serial.print("SYNK_NTP...");
-		#endif
-		time_t ntp;
-		ntp=ntpTime.getTime();
-		if(ntp){
-			synk_ntp_count=SYNK_NTP/SYNK_RTC;
-			Serial.printf("mtp GMT %02u:%02u:%02u done\n", hour(ntp),minute(ntp),second(ntp));
-
-			RtcDateTime dt;
-			dt.InitWithEpoch32Time(ntp);
-			rtc.SetDateTime(dt);
-			return ntp;
-		}
-		Serial.println("Error");
-	}
 	if(!rtc.IsDateTimeValid()){
 			return 0;
 	}
@@ -72,7 +47,12 @@ time_t getRTCTime(){
 #endif
 	return rtctime;
 }
-
+void ntp_synk(time_t ntp_time) {
+    setTime(ntp_time);
+    RtcDateTime dt;
+    dt.InitWithEpoch32Time(ntp_time);
+    rtc.SetDateTime(dt);
+}
 void rtc_init(){
 	//--------RTC SETUP ------------
 	Serial.println("RTC SETUP");
@@ -104,20 +84,7 @@ void rtc_init(){
 	    rtc.SetIsRunning(true);
 	}
 
-	RtcDateTime now = rtc.GetDateTime();
-	if (now < compiled)
-	{
-	    Serial.println("RTC is older than compile time!  (Updating DateTime)");
-	    rtc.SetDateTime(compiled);
-	}
-	else if (now > compiled)
-	{
-	    Serial.println("RTC is newer than compile time. (this is expected)");
-	}
-	else if (now == compiled)
-	{
-	    Serial.println("RTC is the same as compile time! (not expected but all is fine)");
-	}
+//	RtcDateTime now = rtc.GetDateTime();
 
 	// never assume the Rtc was last configured by you, so
 	// just clear them to your needed state
@@ -125,6 +92,7 @@ void rtc_init(){
 	rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
 
 }
+
 int ldr_get(){
 	return ldr.get();
 }
@@ -133,14 +101,11 @@ void setIntensity(int level){
 }
 
 
-
-
 void setup() {
-
     pinMode(pinButton, INPUT);
     Serial.begin(115200);
     delay(500);
-    Serial.println();
+    Serial.println(DEVICE_NAME);
     Serial.println("Compiled " __DATE__ " " __TIME__);
     Serial.println();
 
@@ -158,7 +123,8 @@ void setup() {
     matrix.fillScreen(LOW);
     matrix.setTextColor(HIGH, LOW);
     matrix.setTextSize(1);
-    matrix.print("Start");
+    matrix.setCursor(0, 7);
+    matrix.print(" 0:00");
     matrix.write();
 
     setup_wifi(wifi_ssid, wifi_password);
@@ -166,9 +132,11 @@ void setup() {
 	//--------------
 	rtc_init();
 	ntpTime.init();
+    ntpTime.setSyncFunc(ntp_synk);
+    ntpTime.setSyncInterval(SYNK_NTP_PERIOD);
+
 	setSyncProvider(getRTCTime);
 	setSyncInterval(SYNK_RTC/1000);
-	synk_ntp_count=0;
 	//----------------------
 	intensity.setGetEnviropment(ldr_get);
 	intensity.setSetIntensity(setIntensity);
@@ -177,20 +145,62 @@ void setup() {
 	//------------------
 	dht.begin();
 	//-----------------
-	ota.begin("clock" __DATE__,ota_password);
-    mqtt.setClientID("clock");
+    ota.begin(DEVICE_NAME __DATE__, ota_password);
+    mqtt.setClientID(DEVICE_NAME);
 	Serial.println("Setup done");
 }
 
+void mqtt_loop() {
+    const long now = millis();
+    mqtt.loop();
+    static long nextMsgMQTT = 0;
+    if (now < nextMsgMQTT) {
+        return;
+    }
 
-wl_status_t wl_status= WL_IDLE_STATUS;
-long nextMsgMQTT=0;
+    float dht_readTemperature = dht.readTemperature();
+    float dht_readHumidity = dht.readHumidity();
+    Serial.print("t=");
+    Serial.print(dht_readTemperature);
+    Serial.print(" h=");
+    Serial.println(dht_readTemperature);
+
+    if (isnan(dht_readTemperature) || isnan(dht_readHumidity)) {
+        Serial.println("Failed to read from sensor!");
+        nextMsgMQTT = now + 5 * 1000;
+        return;
+    }
+
+    nextMsgMQTT = now + MQTT_REFRESH_PERIOD;
+
+    String topic;
+
+    topic = "channels/" + String(House_channelID) + "/publish/"
+            + House_Write_API_Key;
+    String data;
+    data = "field" + String(MQTT_TEMPERATURE) + "="
+            + String(dht_readTemperature, 1);
+    data += "&field" + String(MQTT_HUMIDITY) + "="
+            + String(dht_readHumidity, 1);
+    mqtt.publish(topic, data);
+
+    Serial.print("topic= ");
+    Serial.print(topic);
+    Serial.print(" [");
+    Serial.print(data);
+    Serial.println("]");
+}
+wl_status_t wl_status = WL_IDLE_STATUS;
+
 long nextStat=0;
 long nextSec = 0;
+void log_loop() {
+
+}
 void loop() {
 	const long now = millis();
 	ota.loop();
-	mqtt.loop();
+    ntpTime.loop();
 
 	if(wl_status!=WiFi.status()){
 		wl_status=WiFi.status();
@@ -200,6 +210,7 @@ void loop() {
 			  Serial.println(WiFi.localIP());
 		}
 	}
+    mqtt_loop();
 
 	//update info
     if (now >= nextSec)
@@ -223,34 +234,5 @@ void loop() {
 		Serial.println(	digitalRead(pinButton));
 		intensity.handle();
 	}
-
-	if(now>=nextMsgMQTT){
-		float dht_readTemperature=dht.readTemperature();
-		float dht_readHumidity=dht.readHumidity();
-        Serial.print("t=");
-        Serial.print(dht_readTemperature);
-        Serial.print(" h=");
-        Serial.println(dht_readTemperature);
-		if (isnan(dht_readTemperature) || isnan(dht_readHumidity)) {
-		      Serial.println("Failed to read from sensor!");
-          nextMsgMQTT=now+5*1000;
-		}else{
-		  nextMsgMQTT=now+MQTT_REFRESH_PERIOD;
-
-  		String topic;
-  
-  		topic="channels/"+String(House_channelID)+"/publish/"+House_Write_API_Key;
-  		String data;
-  		data="field1="+String(dht_readTemperature,1);
-  		data+="&field2="+String(dht_readHumidity,1);
-  		mqtt.publish(topic, data);
-		
-  		Serial.print("topic= ");
-  		Serial.print(topic);
-  		Serial.print(" [");
-  		Serial.print(data);
-  		Serial.println("]");
-		}
-	}
-
+ 
 }

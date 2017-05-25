@@ -638,7 +638,7 @@ const uint8_t FreeMono9pt7bBitmaps[] PROGMEM = {0x00,       //
 // byte, X , Y, (X + 1pixel space) , xshift right, yshift down
 const GFXglyph FreeMono9pt7bGlyphs[] PROGMEM = {
 
-    {0, 8, 8, 2, 0, -7},     //
+    {   0, 8, 8, 4, 0, -7},     //
     {14, 8, 8, 8, 2, -7},    // !
     {22, 8, 3, 8, 1, -7},    // "
     {0, 0, 0, 8, 0, -7},     // #

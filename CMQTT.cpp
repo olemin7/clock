@@ -32,7 +32,7 @@ CMQTT::CMQTT():client(espClient) {
 }
 
 
-bool CMQTT::setup(const char * domain, uint16_t port){
+void CMQTT::setup(const char * domain, uint16_t port) {
     Serial.print("MQTT Server:");
     Serial.print(domain);
     Serial.print(" port:");

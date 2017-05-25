@@ -22,9 +22,7 @@
 #include <pgmspace.h>
 #include <time.h>
 
-
 #include "NTPtime.h"
-#include "CLightDetectResistor.h"
 #include "CDisplayClock.h"
 #include "CIntensity.h"
 #include "FreeMono9pt7b.h"
@@ -33,21 +31,24 @@
 #include "libpack.h"
 #include "unsorted.h"
 #include "ota.h"
+#include "CLightDetectResistor.h"
 
 #include "CMQTT.h"
 
 #include "secret.h"
-//#ifndef SECRET_H_
-//#define SECRET_H_
-//const char* ssid = "";
-//const char* password = "@ea";
-//const char* mqtt_server = "";
-//const char* Write_API_Key="";
-//const int mqtt_port=;
-//const int channelID = ;
-//const char* update_username = "";
-//const char* update_password = "";
-//#endif
+
+#define ROOM 2
+
+#if 1==ROOM
+#define ROOM_NAME "Parent"
+#endif
+#if 2==ROOM
+#define ROOM_NAME "Children"
+#endif
+
+#define MQTT_TEMPERATURE (1+(ROOM-1)*2)
+#define MQTT_HUMIDITY (MQTT_TEMPERATURE+1)
+#define DEVICE_NAME "CLOCK_" ROOM_NAME
 
 #define DEBUG
 

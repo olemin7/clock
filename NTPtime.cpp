@@ -6,9 +6,7 @@
  */
 
 #include "NTPtime.h"
-
-
-
+#include <time.h>
 
 NTPtime::NTPtime() {
 }
@@ -19,7 +17,6 @@ void NTPtime::init(){
 }
 
 int32 NTPtime::parceAsEpoch() {
-  refreshed = millis();
   udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
   // the timestamp starts at byte 40 of the received packet and is four bytes,
@@ -75,41 +72,27 @@ int NTPtime::sendNTPpacket() {
   return udp.endPacket();
 }
 
-time_t NTPtime::getTimeAsink() {
-  const uint32 curms = millis();
-#ifdef DUBUG_CLOCK_NTPTIME
-  Serial.println();
-  Serial.print(curms);
-  Serial.print(" ");
-  Serial.print(curms - refreshed);
+void NTPtime::loop() {
+    const unsigned long now = millis();
+    if (now < refreshTime)
+        return;
+    Serial.print("NTPtime loop");
+    refreshTime = now + reRefreshPeriod;
+    if (WL_CONNECTED != WiFi.status()) {
+        Serial.println("..Error.no WiFi");
+        return;
+    }
+    time_t ntp;
+    ntp = getTime();
+    if (0 == ntp) {
+        Serial.println("Error.no answer");
+        return;
+    }
+    refreshTime = now + refreshPeriod;
+    Serial.printf("ntp GMT %02u:%02u:%02u done\n", hour(ntp), minute(ntp),
+            second(ntp));
 
-#endif
-  if ((refreshed + refreshPeriod) > curms) {
-    return 0; // time out is not passed
-  }
-#ifdef DUBUG_CLOCK_NTPTIME
-  Serial.print(" ");
-  Serial.print(curms - sendOn);
-#endif
-  if ((sendOn + sendDiscardPeriod) < curms) { // send or resend request
-    sendNTPpacket();
-    sendOn = millis();
-    return 0;
-  }
-// wait reply
-#ifdef DUBUG_CLOCK_NTPTIME
-  Serial.print("wait reply");
-#endif
-  if (0 == udp.parsePacket()) {
-    return 0;
-  }
-  sendOn = 0;
-  refreshed = millis();
-  return parceAsEpoch();
-  ;
+    if (NULL != pSyncFunc) {
+        pSyncFunc(ntp);
+    }
 }
-
-NTPtime::~NTPtime() {
-	// TODO Auto-generated destructor stub
-}
-
