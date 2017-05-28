@@ -22,7 +22,6 @@ const char* mqtt_post_fields="channels/%d/publish/%s";
 
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
-RtcDS3231<TwoWire> rtc(Wire);
 NTPtime ntpTime;
 CLightDetectResistor ldr;
 CDisplayClock displayClock;
@@ -34,24 +33,23 @@ DHT dht(DHTPIN, DHT22);
 CMQTT mqtt;
 COTA ota;
 
+
+#ifdef USE_HW_RTC
+RtcDS3231<TwoWire> rtc(Wire);
+
 time_t getRTCTime(){
 #ifdef DEBUG
-	Serial.println("getRTCTime");
+    Serial.println("getRTCTime");
 #endif
-	if(!rtc.IsDateTimeValid()){
-			return 0;
-	}
-	time_t rtctime=rtc.GetDateTime().Epoch32Time();
+    if (!rtc.IsDateTimeValid()) {
+        return 0;
+    }
+    time_t rtctime = rtc.GetDateTime().Epoch32Time();
 #ifdef DEBUG
-	Serial.printf("rtc GMT %02u:%02u:%02u done\n", hour(rtctime),minute(rtctime),second(rtctime));
+    Serial.printf("rtc GMT %02u:%02u:%02u done\n", hour(rtctime),
+            minute(rtctime), second(rtctime));
 #endif
-	return rtctime;
-}
-void ntp_synk(time_t ntp_time) {
-    setTime(ntp_time);
-    RtcDateTime dt;
-    dt.InitWithEpoch32Time(ntp_time);
-    rtc.SetDateTime(dt);
+    return rtctime;
 }
 void rtc_init(){
 	//--------RTC SETUP ------------
@@ -92,6 +90,16 @@ void rtc_init(){
 	rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
 
 }
+#endif
+
+void ntp_synk(time_t ntp_time) {
+    setTime(ntp_time);
+#ifdef USE_HW_RTC
+    RtcDateTime dt;
+    dt.InitWithEpoch32Time(ntp_time);
+    rtc.SetDateTime(dt);
+#endif
+}
 
 int ldr_get(){
 	return ldr.get();
@@ -130,13 +138,16 @@ void setup() {
     setup_wifi(wifi_ssid, wifi_password);
     mqtt.setup(mqtt_server, mqtt_port);
 	//--------------
-	rtc_init();
+
 	ntpTime.init();
     ntpTime.setSyncFunc(ntp_synk);
     ntpTime.setSyncInterval(SYNK_NTP_PERIOD);
-
+    
+#ifdef USE_HW_RTC
+    rtc_init();
 	setSyncProvider(getRTCTime);
 	setSyncInterval(SYNK_RTC/1000);
+#endif
 	//----------------------
 	intensity.setGetEnviropment(ldr_get);
 	intensity.setSetIntensity(setIntensity);

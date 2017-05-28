@@ -37,10 +37,11 @@
 
 #include "secret.h"
 
-#define ROOM 2
+#define ROOM 1
 
 #if 1==ROOM
 #define ROOM_NAME "Parent"
+#define USE_HW_RTC
 #endif
 #if 2==ROOM
 #define ROOM_NAME "Children"
