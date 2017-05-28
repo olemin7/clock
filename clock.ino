@@ -135,7 +135,7 @@ void setup() {
     matrix.print(" 0:00");
     matrix.write();
 
-    setup_wifi(wifi_ssid, wifi_password);
+    setup_wifi(wifi_ssid, wifi_password, DEVICE_NAME);
     mqtt.setup(mqtt_server, mqtt_port);
 	//--------------
 
@@ -238,10 +238,14 @@ void loop() {
 		char tt[20];
 		displayClock.getFullTime(tt);
 		Serial.println(tt);
-		Serial.printf("LDR sensor %d , temperature ",	ldr.get());
+        Serial.print("LDR sensor =");
+        Serial.print(ldr.get());
+#ifdef USE_HW_RTC
+        Serial.print(", temperature =");
 		Serial.print(rtc.GetTemperature().AsFloat());
 		Serial.println(" C");
-		Serial.print("button ");
+#endif
+        Serial.print(", button =");
 		Serial.println(	digitalRead(pinButton));
 		intensity.handle();
 	}
