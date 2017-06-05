@@ -156,12 +156,17 @@ void setup() {
 	//------------------
 	dht.begin();
 	//-----------------
-    ota.begin(DEVICE_NAME __DATE__, ota_password);
+    ota.begin(DEVICE_NAME, ota_password);
     mqtt.setClientID(DEVICE_NAME);
+    sw_info(DEVICE_NAME, Serial);
 	Serial.println("Setup done");
 }
 
 void mqtt_loop() {
+    if (WL_CONNECTED != WiFi.status()) {
+        return;
+    }
+
     const long now = millis();
     mqtt.loop();
     static long nextMsgMQTT = 0;

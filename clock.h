@@ -37,7 +37,7 @@
 
 #include "secret.h"
 
-#define ROOM 1
+#define ROOM 2
 
 #if 1==ROOM
 #define ROOM_NAME "Parent"
