@@ -241,7 +241,7 @@ void loop() {
         Serial.print("LDR sensor =");
         Serial.print(ldr.get());
 #ifdef USE_HW_RTC
-        Serial.print(", temperature =");
+        Serial.print(",RTC temperature =");
 		Serial.print(rtc.GetTemperature().AsFloat());
 		Serial.println(" C");
 #endif
