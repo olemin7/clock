@@ -25,7 +25,7 @@ Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVe
 NTPtime ntpTime;
 CLightDetectResistor ldr;
 CDisplayClock displayClock;
-int aIntensityRation[][2] ={{10,0},{300,1},{1000,3}};
+int aIntensityRation[][2] = { { 10, 0 }, { 300, 1 }, { 1000, 4 } };
 CIntensity intensity(aIntensityRation,3);
 DHT dht(DHTPIN, DHT22);
 //US Eastern Time Zone (New York, Detroit)
@@ -212,7 +212,7 @@ void loop() {
 	const long now = millis();
 	ota.loop();
     ntpTime.loop();
-
+    intensity.loop();
 	if(wl_status!=WiFi.status()){
 		wl_status=WiFi.status();
 		Serial.printf("WiFi.status %d\n",wl_status);
@@ -247,7 +247,6 @@ void loop() {
 #endif
         Serial.print(", button =");
 		Serial.println(	digitalRead(pinButton));
-		intensity.handle();
 	}
  
 }
