@@ -206,7 +206,6 @@ void mqtt_loop() {
     Serial.print(data);
     Serial.println("]");
 }
-wl_status_t wl_status = WL_IDLE_STATUS;
 
 long nextStat=0;
 long nextSec = 0;
@@ -218,14 +217,7 @@ void loop() {
 	ota.loop();
     ntpTime.loop();
     intensity.loop();
-	if(wl_status!=WiFi.status()){
-		wl_status=WiFi.status();
-		Serial.printf("WiFi.status %d\n",wl_status);
-		if(WL_CONNECTED==wl_status){
-			  Serial.print("WiFi connected, IP address: ");
-			  Serial.println(WiFi.localIP());
-		}
-	}
+    wifi_loop();
     mqtt_loop();
 
 	//update info
@@ -246,7 +238,7 @@ void loop() {
         Serial.print("LDR sensor =");
         Serial.print(ldr.get());
 #ifdef USE_HW_RTC
-        Serial.print(", temperature =");
+        Serial.print(",RTC temperature =");
 		Serial.print(rtc.GetTemperature().AsFloat());
 		Serial.println(" C");
 #endif
