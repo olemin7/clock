@@ -39,6 +39,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/Adafruit-GFX-Library}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/arduino-Max72xxPanel}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/Time}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/acus}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.356776448" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -64,6 +65,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/Adafruit-GFX-Library}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/arduino-Max72xxPanel}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/Time}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/acus}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.386923864" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -89,6 +91,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/Adafruit-GFX-Library}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/arduino-Max72xxPanel}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/Time}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/clock/libraries/acus}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.1754430813" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>

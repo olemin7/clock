@@ -102,6 +102,11 @@
 			<locationURI>ECLIPSE_HOME/arduinoPlugin/packages/esp8266/hardware/esp8266/2.3.0/libraries/Wire</locationURI>
 		</link>
 		<link>
+			<name>libraries/acus</name>
+			<type>2</type>
+			<location>D:/user/hobby/git/libraries/acus</location>
+		</link>
+		<link>
 			<name>libraries/arduino-Max72xxPanel</name>
 			<type>2</type>
 			<location>D:/user/hobby/git/libraries/arduino-Max72xxPanel</location>

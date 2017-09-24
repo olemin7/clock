@@ -7,7 +7,7 @@ const int numberOfVerticalDisplays = 1;
 const int DHTPIN = D4;
 const int pinButton = D3;
 
-const int32 SYNK_RTC = 60 * 60 * 1000; //one per hour
+const int32 SYNK_RTC_PERIOD = 30 * 60 * 1000; //one per hour
 const unsigned long SYNK_NTP_PERIOD = 24 * 60 * 60 * 1000; // one per day
 
 const long MQTT_REFRESH_PERIOD=15*60*1000;
@@ -22,92 +22,109 @@ const char* mqtt_post_fields="channels/%d/publish/%s";
 
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
-NTPtime ntpTime;
-CLightDetectResistor ldr;
+class CIntClock:public  ObserverWrite<time_t>{
+public:
+    virtual void writeValue(time_t value){
+ //       time_t cur= now();
+        setTime(value);
+    }
+};
+#ifdef USE_HW_RTC
+class CHWClock:public  ObserverWrite<time_t>,public CSubjectPeriodic<time_t>{
+    virtual uint32_t getTimeInMs(){     return millis();  }
+    RtcDS3231<TwoWire> rtc;
+public:
+    CHWClock(uint32_t period):CSubjectPeriodic<time_t>(period,10*1000),rtc(Wire){};
+    virtual void writeValue(time_t value){
+        RtcDateTime dt;
+        dt.InitWithEpoch32Time(value);
+        rtc.SetDateTime(dt);
+    }
+    virtual bool readValue(time_t &value){
+#ifdef DEBUG
+        Serial.println("getRTCTime");
+#endif
+        if (!rtc.IsDateTimeValid()) {
+            return false;
+        }
+        value = rtc.GetDateTime().Epoch32Time();
+#ifdef DEBUG
+        Serial.printf("rtc GMT %02u:%02u:%02u done\n", hour(value),
+                minute(value), second(value));
+#endif
+        return true;
+    }
+    void init(){
+        //--------RTC SETUP ------------
+        Serial.println("RTC SETUP");
+        rtc.Begin();
+
+        if (!rtc.IsDateTimeValid())
+        {
+            // Common Cuases:
+            //    1) first time you ran and the device wasn't running yet
+            //    2) the battery on the device is low or even missing
+
+            Serial.println("RTC lost confidence in the DateTime!");
+
+            // following line sets the RTC to the date & time this sketch was compiled
+            // it will also reset the valid flag internally unless the Rtc device is
+            // having an issue
+
+            rtc.SetDateTime(0);
+        }
+
+        if (!rtc.GetIsRunning())
+        {
+            Serial.println("RTC was not actively running, starting now");
+            rtc.SetIsRunning(true);
+        }
+
+        // never assume the Rtc was last configured by you, so
+        // just clear them to your needed state
+        rtc.Enable32kHzPin(false);
+        rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
+    }
+};
+CHWClock hwClock(SYNK_RTC_PERIOD);
+#endif
+
+NTPtime ntpTime(SYNK_NTP_PERIOD);
+CIntClock intClock;
+
 CDisplayClock displayClock;
-int aIntensityRation[][2] = { { 10, 0 }, { 300, 1 }, { 1000, 4 } };
-CIntensity intensity(aIntensityRation,3);
+
 DHT dht(DHTPIN, DHT22);
 //US Eastern Time Zone (New York, Detroit)
 
 CMQTT mqtt;
 COTA ota;
 
-
-#ifdef USE_HW_RTC
-RtcDS3231<TwoWire> rtc(Wire);
-
-time_t getRTCTime(){
-#ifdef DEBUG
-    Serial.println("getRTCTime");
-#endif
-    if (!rtc.IsDateTimeValid()) {
-        return 0;
+class CLDR: public CSubjectPeriodic<int16_t> {
+    CLightDetectResistor ldr;
+    virtual uint32_t getTimeInMs() {
+        return millis();
     }
-    time_t rtctime = rtc.GetDateTime().Epoch32Time();
-#ifdef DEBUG
-    Serial.printf("rtc GMT %02u:%02u:%02u done\n", hour(rtctime),
-            minute(rtctime), second(rtctime));
-#endif
-    return rtctime;
-}
-void rtc_init(){
-	//--------RTC SETUP ------------
-	Serial.println("RTC SETUP");
-	rtc.Begin();
+public:
+    CLDR() : CSubjectPeriodic<int16_t>(100) {};
+    bool readValue(int16_t &value) {
+        value=ldr.get();
+        return true;
+    }
+};
+class CIntensitySet: public ObserverWrite<int16_t> {
+public:
+    virtual void writeValue(int16_t value) {
+        matrix.setIntensity(value);
+    }
+};
 
-	// if you are using ESP-01 then uncomment the line below to reset the pins to
-	// the available pins for SDA, SCL
-	// Wire.begin(0, 2); // due to limited pins, use pin 0 and 2 for SDA, SCL
+const int16_t itransforms[] = { 0, 200, 600, 1000 };
 
-	RtcDateTime compiled = displayClock.toUTC(RtcDateTime(__DATE__, __TIME__));
-	if (!rtc.IsDateTimeValid())
-	{
-	    // Common Cuases:
-	    //    1) first time you ran and the device wasn't running yet
-	    //    2) the battery on the device is low or even missing
-
-	    Serial.println("RTC lost confidence in the DateTime!");
-
-	    // following line sets the RTC to the date & time this sketch was compiled
-	    // it will also reset the valid flag internally unless the Rtc device is
-	    // having an issue
-
-	    rtc.SetDateTime(compiled);
-	}
-
-	if (!rtc.GetIsRunning())
-	{
-	    Serial.println("RTC was not actively running, starting now");
-	    rtc.SetIsRunning(true);
-	}
-
-//	RtcDateTime now = rtc.GetDateTime();
-
-	// never assume the Rtc was last configured by you, so
-	// just clear them to your needed state
-	rtc.Enable32kHzPin(false);
-	rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
-
-}
-#endif
-
-void ntp_synk(time_t ntp_time) {
-    setTime(ntp_time);
-#ifdef USE_HW_RTC
-    RtcDateTime dt;
-    dt.InitWithEpoch32Time(ntp_time);
-    rtc.SetDateTime(dt);
-#endif
-}
-
-int ldr_get(){
-	return ldr.get();
-}
-void setIntensity(int level){
-	matrix.setIntensity(level);
-}
-
+CLDR ldr;
+CFilter_ValueToPos<int16_t> intensityTransform(itransforms, 5);
+CFilter_OnChange<int16_t> intensityOnChange;
+CIntensitySet intensitySet;
 
 void setup() {
     pinMode(pinButton, INPUT);
@@ -140,19 +157,16 @@ void setup() {
 	//--------------
 
 	ntpTime.init();
-    ntpTime.setSyncFunc(ntp_synk);
-    ntpTime.setSyncInterval(SYNK_NTP_PERIOD);
-    
+	ntpTime.addListener(intClock);
 #ifdef USE_HW_RTC
-    rtc_init();
-	setSyncProvider(getRTCTime);
-	setSyncInterval(SYNK_RTC/1000);
+	hwClock.init();
+	ntpTime.addListener(hwClock);
+	hwClock.addListener(intClock);
 #endif
-	//----------------------
-	intensity.setGetEnviropment(ldr_get);
-	intensity.setSetIntensity(setIntensity);
-
-
+    //----------------------
+	ldr.addListener(intensityTransform);
+    intensityTransform.addListener(intensityOnChange);
+    intensityOnChange.addListener(intensitySet);
 	//------------------
 	dht.begin();
 	//-----------------
@@ -215,10 +229,9 @@ void log_loop() {
 void loop() {
 	const long now = millis();
 	ota.loop();
-    ntpTime.loop();
-    intensity.loop();
     wifi_loop();
     mqtt_loop();
+    CFilterLoop::loops();
 
 	//update info
     if (now >= nextSec)
@@ -236,12 +249,8 @@ void loop() {
 		displayClock.getFullTime(tt);
 		Serial.println(tt);
         Serial.print("LDR sensor =");
-        Serial.print(ldr.get());
-#ifdef USE_HW_RTC
-        Serial.print(",RTC temperature =");
-		Serial.print(rtc.GetTemperature().AsFloat());
-		Serial.println(" C");
-#endif
+        Serial.print(ldr.getValue());
+
         Serial.print(", button =");
 		Serial.println(	digitalRead(pinButton));
 	}

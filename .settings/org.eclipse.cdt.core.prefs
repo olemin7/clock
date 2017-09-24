@@ -382,7 +382,7 @@ environment/project/io.sloeber.core.toolChain.release.997672506/A.SERIAL.PORT.FI
 environment/project/io.sloeber.core.toolChain.release.997672506/A.SERIAL.PORT.FILE/value=${A.SERIAL.PORT}
 environment/project/io.sloeber.core.toolChain.release.997672506/A.SERIAL.PORT/delimiter=;
 environment/project/io.sloeber.core.toolChain.release.997672506/A.SERIAL.PORT/operation=replace
-environment/project/io.sloeber.core.toolChain.release.997672506/A.SERIAL.PORT/value=192.168.1.22
+environment/project/io.sloeber.core.toolChain.release.997672506/A.SERIAL.PORT/value=192.168.1.218
 environment/project/io.sloeber.core.toolChain.release.997672506/A.SOFTWARE/delimiter=;
 environment/project/io.sloeber.core.toolChain.release.997672506/A.SOFTWARE/operation=replace
 environment/project/io.sloeber.core.toolChain.release.997672506/A.SOFTWARE/value=baeyens

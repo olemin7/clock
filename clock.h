@@ -24,7 +24,6 @@
 
 #include "NTPtime.h"
 #include "CDisplayClock.h"
-#include "CIntensity.h"
 #include "FreeMono9pt7b.h"
 #include "DHT.h"
 
@@ -37,7 +36,9 @@
 
 #include "secret.h"
 
-#define ROOM 2
+#include "CFilter.h"
+
+#define ROOM 1
 
 #if 1==ROOM
 #define ROOM_NAME "Parent"
