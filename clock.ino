@@ -29,65 +29,6 @@ public:
         setTime(value);
     }
 };
-#ifdef USE_HW_RTC
-class CHWClock:public  ObserverWrite<time_t>,public CSubjectPeriodic<time_t>{
-    virtual uint32_t getTimeInMs(){     return millis();  }
-    RtcDS3231<TwoWire> rtc;
-public:
-    CHWClock(uint32_t period):CSubjectPeriodic<time_t>(period,10*1000),rtc(Wire){};
-    virtual void writeValue(time_t value){
-        RtcDateTime dt;
-        dt.InitWithEpoch32Time(value);
-        rtc.SetDateTime(dt);
-    }
-    virtual bool readValue(time_t &value){
-#ifdef DEBUG
-        Serial.println("getRTCTime");
-#endif
-        if (!rtc.IsDateTimeValid()) {
-            return false;
-        }
-        value = rtc.GetDateTime().Epoch32Time();
-#ifdef DEBUG
-        Serial.printf("rtc GMT %02u:%02u:%02u done\n", hour(value),
-                minute(value), second(value));
-#endif
-        return true;
-    }
-    void init(){
-        //--------RTC SETUP ------------
-        Serial.println("RTC SETUP");
-        rtc.Begin();
-
-        if (!rtc.IsDateTimeValid())
-        {
-            // Common Cuases:
-            //    1) first time you ran and the device wasn't running yet
-            //    2) the battery on the device is low or even missing
-
-            Serial.println("RTC lost confidence in the DateTime!");
-
-            // following line sets the RTC to the date & time this sketch was compiled
-            // it will also reset the valid flag internally unless the Rtc device is
-            // having an issue
-
-            rtc.SetDateTime(0);
-        }
-
-        if (!rtc.GetIsRunning())
-        {
-            Serial.println("RTC was not actively running, starting now");
-            rtc.SetIsRunning(true);
-        }
-
-        // never assume the Rtc was last configured by you, so
-        // just clear them to your needed state
-        rtc.Enable32kHzPin(false);
-        rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);
-    }
-};
-CHWClock hwClock(SYNK_RTC_PERIOD);
-#endif
 
 NTPtime ntpTime(SYNK_NTP_PERIOD);
 CIntClock intClock;
@@ -149,7 +90,7 @@ void setup() {
     matrix.setTextColor(HIGH, LOW);
     matrix.setTextSize(1);
     matrix.setCursor(0, 7);
-    matrix.print(" 0:00");
+    matrix.print("init");
     matrix.write();
 
     setup_wifi(wifi_ssid, wifi_password, DEVICE_NAME);
@@ -158,11 +99,7 @@ void setup() {
 
 	ntpTime.init();
 	ntpTime.addListener(intClock);
-#ifdef USE_HW_RTC
-	hwClock.init();
-	ntpTime.addListener(hwClock);
-	hwClock.addListener(intClock);
-#endif
+
     //----------------------
 	ldr.addListener(intensityTransform);
     intensityTransform.addListener(intensityOnChange);
@@ -238,7 +175,11 @@ void loop() {
 	{
         matrix.fillScreen(LOW);
         matrix.setCursor(0, 7);
-        matrix.print(displayClock.getStrMin());
+        if(timeNotSet== timeStatus()){
+            matrix.print("synk.");
+        }else{
+            matrix.print(displayClock.getStrMin());
+        }
         matrix.write();
         nextSec = now + 5000;
 	}

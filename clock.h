@@ -9,18 +9,13 @@
 #define CLOCK_CLOCK_H_
 
 #include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Max72xxPanel.h>
+#include <Adafruit_GFX.h> //https://github.com/adafruit/Adafruit-GFX-Library.git
+#include <Max72xxPanel.h> // https://github.com/markruys/arduino-Max72xxPanel.git
 
 #include <ESP8266WiFi.h>
 
-
-#include <TimeLib.h>
-
 #include <Wire.h> // must be included here so that Arduino library object file references work
-#include <RtcDS3231.h>
 #include <pgmspace.h>
-#include <time.h>
 
 #include "NTPtime.h"
 #include "CDisplayClock.h"
@@ -42,7 +37,6 @@
 
 #if 1==ROOM
 #define ROOM_NAME "Parent"
-#define USE_HW_RTC
 #endif
 #if 2==ROOM
 #define ROOM_NAME "Children"
