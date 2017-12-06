@@ -32,6 +32,7 @@
 #include "secret.h"
 
 #include "CFilter.h"
+#include "CDimableLed.h"
 
 #define ROOM 1
 

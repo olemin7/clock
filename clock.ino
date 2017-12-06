@@ -4,8 +4,9 @@ const int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf h
 const int numberOfHorizontalDisplays = 4;
 const int numberOfVerticalDisplays = 1;
 
-const int DHTPIN = D4;
+const int DHTPIN 	= D4;
 const int pinButton = D3;
+
 
 const int32 SYNK_RTC_PERIOD = 30 * 60 * 1000; //one per hour
 const unsigned long SYNK_NTP_PERIOD = 24 * 60 * 60 * 1000; // one per day
@@ -22,16 +23,35 @@ const char* mqtt_post_fields="channels/%d/publish/%s";
 
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
-class CIntClock:public  ObserverWrite<time_t>{
+class CSetClock:public  ObserverWrite<time_t>{
 public:
     virtual void writeValue(time_t value){
- //       time_t cur= now();
         setTime(value);
     }
 };
+/***
+ *
+ */
+class CClock:public Observer<time_t>,CSubjectPeriodic<time_t>{
+	virtual uint32_t getTimeInMs(){return now();}
+	void update(const Subject<time_t> &time){
+		setValue(time.getValue());
+	}
+	bool readValue(time_t &time){
+		if(timeNotSet==timeStatus())return false;
+		time=now();
+		return true;
+	}
+public:
+	CClock(uint32_t aperiod):CSubjectPeriodic<time_t>(aperiod){};
+};
+
 
 NTPtime ntpTime(SYNK_NTP_PERIOD);
-CIntClock intClock;
+CSetClock setClock;
+CClock Clock1sec(1000);
+
+CDimableLed dimableLed;
 
 CDisplayClock displayClock;
 
@@ -53,19 +73,24 @@ public:
         return true;
     }
 };
+const int16_t itransforms[] = { 0, 200, 600, 1000 };
 class CIntensitySet: public ObserverWrite<int16_t> {
+	CFilter_ValueToPos<int16_t> intensityTransform;
+	CFilter_OnChange<int16_t> intensityOnChange;
 public:
+	CLDR ldr;
     virtual void writeValue(int16_t value) {
         matrix.setIntensity(value);
     }
+    CIntensitySet():intensityTransform(itransforms, 5){
+    	ldr.addListener(intensityTransform);
+        intensityTransform.addListener(intensityOnChange);
+        intensityOnChange.addListener(*this);
+    }
 };
-
-const int16_t itransforms[] = { 0, 200, 600, 1000 };
-
-CLDR ldr;
-CFilter_ValueToPos<int16_t> intensityTransform(itransforms, 5);
-CFilter_OnChange<int16_t> intensityOnChange;
 CIntensitySet intensitySet;
+
+
 
 void setup() {
     pinMode(pinButton, INPUT);
@@ -98,12 +123,10 @@ void setup() {
 	//--------------
 
 	ntpTime.init();
-	ntpTime.addListener(intClock);
+	ntpTime.addListener(setClock);
+	ntpTime.addListener(Clock1sec);
 
     //----------------------
-	ldr.addListener(intensityTransform);
-    intensityTransform.addListener(intensityOnChange);
-    intensityOnChange.addListener(intensitySet);
 	//------------------
 	dht.begin();
 	//-----------------
@@ -190,7 +213,7 @@ void loop() {
 		displayClock.getFullTime(tt);
 		Serial.println(tt);
         Serial.print("LDR sensor =");
-        Serial.print(ldr.getValue());
+        Serial.print(intensitySet.ldr.getValue());
 
         Serial.print(", button =");
 		Serial.println(	digitalRead(pinButton));
