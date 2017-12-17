@@ -57,6 +57,10 @@ class CIR_Control_handler:public CSubjectPeriodic<uint8_t>{
 		}
 		return true;
 	}
+public:
+    CIR_Control_handler(){
+        irrecv.enableIRIn();
+    }
 };
 
 /***

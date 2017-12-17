@@ -10,9 +10,11 @@ const int pinButton = D3;
 
 const int32 SYNK_RTC_PERIOD = 30 * 60 * 1000; //one per hour
 const unsigned long SYNK_NTP_PERIOD = 24 * 60 * 60 * 1000; // one per day
-
-const long MQTT_REFRESH_PERIOD=15*60*1000;
-
+#ifndef DEBUG
+    const long MQTT_REFRESH_PERIOD=15*60*1000;
+#else
+    const long MQTT_REFRESH_PERIOD=5*1000;
+#endif
 //channels/<channelID>/publish/fields/field<fieldnumber>/<apikey>
 const char* mqtt_post_field_single="channels/%d/publish/fields/field%d/%s";
 
@@ -172,8 +174,9 @@ void mqtt_loop() {
             + String(dht_readTemperature, 1);
     data += "&field" + String(MQTT_HUMIDITY) + "="
             + String(dht_readHumidity, 1);
+#ifndef DEBUG
     mqtt.publish(topic, data);
-
+#endif
     Serial.print("topic= ");
     Serial.print(topic);
     Serial.print(" [");
@@ -190,7 +193,7 @@ void loop() {
 	const long now = millis();
 	ota.loop();
     wifi_loop();
-    mqtt_loop();
+ //   mqtt_loop();
     CFilterLoop::loops();
 
 	//update info

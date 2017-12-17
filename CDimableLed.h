@@ -20,7 +20,7 @@ enum{
 
 const int GPIO_POUT_LED 	    =D1;
 const int GPIO_PIN_WALL_SWITCH 	=D2;
-const int GPIO_PIN_IRsensor     =D4;
+const int GPIO_PIN_IRsensor     =D3;
 
 const int LED_OFF         =0;
 const int LED_NIGHT       =1;
