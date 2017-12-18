@@ -29,7 +29,7 @@ const int LED_HIGHT       =PWMRANGE;
 
 class CDimableLed {
 public:
-	CDimableLed();
+	void setup();
 	virtual ~CDimableLed(){};
 };
 

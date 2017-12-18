@@ -77,7 +77,7 @@ class CSwitch_Control_handler:public Subject<uint8_t>,public ObserverWrite<bool>
 		}
 	};
 	class CDebounce:public CFilter_Debounce<bool>{
-		uint32_t getTimeInMs(){return now();}
+		uint32_t getTimeInMs(){return millis();}
 	public:
 		CDebounce():CFilter_Debounce(50){};
 	};
@@ -86,11 +86,14 @@ class CSwitch_Control_handler:public Subject<uint8_t>,public ObserverWrite<bool>
 	CFilter_OnChange<bool> onChange;
 	void writeValue(bool value){
 		setValue(CMD_LED_SWICH_STATE);
+		Serial.print("CMD_LED_SWICH_STATE val=");
+		Serial.println(value);
 	}
 	public:
-		CSwitch_Control_handler(){
+		void setup(){
 			source.addListener(debounce);
 			debounce.addListener(onChange);
+			debounce.waitSetting();
 			onChange.addListener(*this);
 	}
 };
@@ -99,11 +102,11 @@ CLed_Handler ledHandler;
 CIR_Control_handler irControl_handler;
 CSwitch_Control_handler switchControl_handler;
 
-
-CDimableLed::CDimableLed() {
-	//2 sourses to led controll
-	irControl_handler.addListener(ledHandler);
-	switchControl_handler.addListener(ledHandler);
+void CDimableLed::setup(){
+    switchControl_handler.setup();
+    irControl_handler.addListener(ledHandler);
+    switchControl_handler.addListener(ledHandler);
 }
+
 
 

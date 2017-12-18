@@ -5,8 +5,6 @@ const int numberOfHorizontalDisplays = 4;
 const int numberOfVerticalDisplays = 1;
 
 const int DHTPIN 	= D4;
-const int pinButton = D3;
-
 
 const int32 SYNK_RTC_PERIOD = 30 * 60 * 1000; //one per hour
 const unsigned long SYNK_NTP_PERIOD = 24 * 60 * 60 * 1000; // one per day
@@ -83,6 +81,8 @@ public:
 	CLDR ldr;
     virtual void writeValue(int16_t value) {
         matrix.setIntensity(value);
+        Serial.print("matrix.setIntensity=");
+        Serial.println(value);
     }
     CIntensitySet():intensityTransform(itransforms, 5){
     	ldr.addListener(intensityTransform);
@@ -95,9 +95,11 @@ CIntensitySet intensitySet;
 
 
 void setup() {
-    pinMode(pinButton, INPUT);
+
     Serial.begin(115200);
+    pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
     delay(500);
+    dimableLed.setup();
     Serial.println(DEVICE_NAME);
     Serial.println("Compiled " __DATE__ " " __TIME__);
     Serial.println();
@@ -184,11 +186,8 @@ void mqtt_loop() {
     Serial.println("]");
 }
 
-long nextStat=0;
 long nextSec = 0;
-void log_loop() {
 
-}
 void loop() {
 	const long now = millis();
 	ota.loop();
@@ -209,17 +208,4 @@ void loop() {
         matrix.write();
         nextSec = now + 5000;
 	}
-
-	if(now>=nextStat){
-		nextStat=now+5000;
-		char tt[20];
-		displayClock.getFullTime(tt);
-		Serial.println(tt);
-        Serial.print("LDR sensor =");
-        Serial.print(intensitySet.ldr.getValue());
-
-        Serial.print(", button =");
-		Serial.println(	digitalRead(pinButton));
-	}
- 
 }
