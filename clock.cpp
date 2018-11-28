@@ -4,7 +4,7 @@ const int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf h
 const int numberOfHorizontalDisplays = 4;
 const int numberOfVerticalDisplays = 1;
 
-const int DHTPIN 	= D4;
+const int DHTPin = D4;
 
 const int32 SYNK_RTC_PERIOD = 30 * 60 * 1000; //one per hour
 const unsigned long SYNK_NTP_PERIOD = 24 * 60 * 60 * 1000; // one per day
@@ -19,6 +19,8 @@ const char* mqtt_post_field_single="channels/%d/publish/fields/field%d/%s";
 //channels/<channelID>/publish/<apikey>
 //field1=100&field2=50&lat=30.61&long=40.3
 const char* mqtt_post_fields="channels/%d/publish/%s";
+
+const char* update_path = "/firmware";
 
 
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
@@ -46,8 +48,12 @@ public:
 	CClock(uint32_t aperiod):CSubjectPeriodic<time_t>(aperiod){};
 };
 
+void setTime_(const time_t &par) {
+  setTime(par);
+  Serial.println("setTime_");
+}
 
-NTPtime ntpTime(SYNK_NTP_PERIOD);
+NTPtime ntpTime;
 CSetClock setClock;
 CClock Clock1sec(1000);
 
@@ -55,11 +61,12 @@ CDimableLed dimableLed;
 
 CDisplayClock displayClock;
 
-DHT dht(DHTPIN, DHT22);
+DHTesp dht;
 //US Eastern Time Zone (New York, Detroit)
 
+ESP8266WebServer server(80);
 CMQTT mqtt;
-COTA ota;
+ESP8266HTTPUpdateServer otaUpdater;
 
 class CLDR: public CSubjectPeriodic<int16_t> {
     CLightDetectResistor ldr;
@@ -96,8 +103,9 @@ CIntensitySet intensitySet;
 
 void setup() {
 
-    Serial.begin(115200);
-    pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
+  Serial.begin(115200);
+  pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
+  pinMode(DHTPin, INPUT);
     delay(500);
     dimableLed.setup();
     Serial.println(DEVICE_NAME);
@@ -127,14 +135,11 @@ void setup() {
 	//--------------
 
 	ntpTime.init();
-	ntpTime.addListener(setClock);
-	ntpTime.addListener(Clock1sec);
-
-    //----------------------
+  ntpTime.setCallback(setTime_);
 	//------------------
-	dht.begin();
+  dht.setup(DHTPin, DHTesp::DHT22);
 	//-----------------
-    ota.begin(DEVICE_NAME, ota_password);
+  otaUpdater.setup(&server, update_path, ota_username, ota_password);
     mqtt.setClientID(DEVICE_NAME);
     sw_info(DEVICE_NAME, Serial);
 	Serial.println("Setup done");
@@ -152,10 +157,10 @@ void mqtt_loop() {
         return;
     }
 
-    float dht_readTemperature = dht.readTemperature();
-    float dht_readHumidity = dht.readHumidity();
+  const auto dht_readTemperature = dht.getTemperature();
+  const auto dht_readHumidity = dht.getHumidity();
     Serial.print("t=");
-    Serial.print(dht_readTemperature);
+  Serial.print(dht_readTemperature);
     Serial.print(" h=");
     Serial.println(dht_readTemperature);
 
@@ -189,11 +194,11 @@ void mqtt_loop() {
 long nextSec = 0;
 
 void loop() {
-	const long now = millis();
-	ota.loop();
-    wifi_loop();
+  const long now = millis();
+  wifi_loop();
  //   mqtt_loop();
     CFilterLoop::loops();
+  ntpTime.loop();
 
 	//update info
     if (now >= nextSec)

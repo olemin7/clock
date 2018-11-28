@@ -9,29 +9,34 @@
 #define CLOCK_CLOCK_H_
 
 #include <SPI.h>
-#include <Adafruit_GFX.h> //https://github.com/adafruit/Adafruit-GFX-Library.git
-#include <Max72xxPanel.h> // https://github.com/markruys/arduino-Max72xxPanel.git
+#include "./libs/Max72xxPanel.h" // https://github.com/markruys/arduino-Max72xxPanel.git
 
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+#include <ESP8266HTTPUpdateServer.h>
 
 #include <Wire.h> // must be included here so that Arduino library object file references work
 #include <pgmspace.h>
 
-#include "NTPtime.h"
+#include "./libs/NTPtime.h"
 #include "CDisplayClock.h"
 #include "FreeMono9pt7b.h"
-#include "DHT.h"
 
-#include "libpack.h"
-#include "unsorted.h"
-#include "ota.h"
-#include "CLightDetectResistor.h"
+#include "DHTesp.h"
 
-#include "CMQTT.h"
+//#include "libpack.h"
+#include "./libs/unsorted.h"
+#include "./libs/CLightDetectResistor.h"
 
+#include "./libs/CMQTT.h"
+#if 1
+#include "secret.h_ex"
+#else
 #include "secret.h"
+#endif
 
-#include "CFilter.h"
+#include "./libs/CFilter.h"
 #include "CDimableLed.h"
 
 #define ROOM 1

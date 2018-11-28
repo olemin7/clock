@@ -7,8 +7,8 @@
 
 #ifndef CLOCK_CDISPLAYCLOCK_H_
 #define CLOCK_CDISPLAYCLOCK_H_
-#include <TimeLib.h>
-#include <Timezone.h>
+#include "./libs/TimeLib.h"
+#include "./libs/Timezone.h"
 
 class CDisplayClock {
   char buffMin[6];

@@ -8,8 +8,8 @@
 #ifndef CDIMABLELED_H_
 #define CDIMABLELED_H_
 #include <Arduino.h>
-#include "CFilter.h"
-#include "IRremoteESP8266_nec.h"
+#include "./libs/CFilter.h"
+#include "./libs/IRremoteESP8266_nec.h"
 enum{
 	CMD_LED_OFF=0,
 	CMD_LED_NIGHT,
