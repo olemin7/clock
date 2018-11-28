@@ -1,4 +1,6 @@
 #include "clock.h"
+#include "./libs/TimeLib.h"
+#include "./libs/Timezone.h"
 
 const int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
 const int numberOfHorizontalDisplays = 4;
@@ -6,100 +8,36 @@ const int numberOfVerticalDisplays = 1;
 
 const int DHTPin = D4;
 
-const int32 SYNK_RTC_PERIOD = 30 * 60 * 1000; //one per hour
-const unsigned long SYNK_NTP_PERIOD = 24 * 60 * 60 * 1000; // one per day
 #ifndef DEBUG
     const long MQTT_REFRESH_PERIOD=15*60*1000;
 #else
     const long MQTT_REFRESH_PERIOD=5*1000;
 #endif
-//channels/<channelID>/publish/fields/field<fieldnumber>/<apikey>
-const char* mqtt_post_field_single="channels/%d/publish/fields/field%d/%s";
-
-//channels/<channelID>/publish/<apikey>
-//field1=100&field2=50&lat=30.61&long=40.3
-const char* mqtt_post_fields="channels/%d/publish/%s";
 
 const char* update_path = "/firmware";
 
+Timezone myTZ((TimeChangeRule ) { "DST", Last, Sun, Mar, 3, +3 * 60 },
+    (TimeChangeRule ) { "STD", Last, Sun, Oct, 4, +2 * 60 });
 
-Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
-
-class CSetClock:public  ObserverWrite<time_t>{
-public:
-    virtual void writeValue(time_t value){
-        setTime(value);
-    }
-};
-/***
- *
- */
-class CClock:public Observer<time_t>,CSubjectPeriodic<time_t>{
-	virtual uint32_t getTimeInMs(){return now();}
-	void update(const Subject<time_t> &time){
-		setValue(time.getValue());
-	}
-	bool readValue(time_t &time){
-		if(timeNotSet==timeStatus())return false;
-		time=now();
-		return true;
-	}
-public:
-	CClock(uint32_t aperiod):CSubjectPeriodic<time_t>(aperiod){};
-};
-
+time_t get_local_time() {
+  return myTZ.toLocal(now());
+}
 void setTime_(const time_t &par) {
   setTime(par);
   Serial.println("setTime_");
 }
 
+Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
+
 NTPtime ntpTime;
-CSetClock setClock;
-CClock Clock1sec(1000);
-
 CDimableLed dimableLed;
-
-CDisplayClock displayClock;
-
+CLightDetectResistor ldr;
 DHTesp dht;
 //US Eastern Time Zone (New York, Detroit)
 
 ESP8266WebServer server(80);
 CMQTT mqtt;
 ESP8266HTTPUpdateServer otaUpdater;
-
-class CLDR: public CSubjectPeriodic<int16_t> {
-    CLightDetectResistor ldr;
-    virtual uint32_t getTimeInMs() {
-        return millis();
-    }
-public:
-    CLDR() : CSubjectPeriodic<int16_t>(100) {};
-    bool readValue(int16_t &value) {
-        value=ldr.get();
-        return true;
-    }
-};
-const int16_t itransforms[] = { 0, 200, 600, 1000 };
-class CIntensitySet: public ObserverWrite<int16_t> {
-	CFilter_ValueToPos<int16_t> intensityTransform;
-	CFilter_OnChange<int16_t> intensityOnChange;
-public:
-	CLDR ldr;
-    virtual void writeValue(int16_t value) {
-        matrix.setIntensity(value);
-        Serial.print("matrix.setIntensity=");
-        Serial.println(value);
-    }
-    CIntensitySet():intensityTransform(itransforms, 5){
-    	ldr.addListener(intensityTransform);
-        intensityTransform.addListener(intensityOnChange);
-        intensityOnChange.addListener(*this);
-    }
-};
-CIntensitySet intensitySet;
-
-
 
 void setup() {
 
@@ -140,8 +78,8 @@ void setup() {
   dht.setup(DHTPin, DHTesp::DHT22);
 	//-----------------
   otaUpdater.setup(&server, update_path, ota_username, ota_password);
-    mqtt.setClientID(DEVICE_NAME);
-    sw_info(DEVICE_NAME, Serial);
+  mqtt.setClientID(DEVICE_NAME);
+  sw_info(DEVICE_NAME, Serial);
 	Serial.println("Setup done");
 }
 
@@ -191,26 +129,58 @@ void mqtt_loop() {
     Serial.println("]");
 }
 
-long nextSec = 0;
 
+
+void time_loop() {
+  const auto now = millis();
+  static long nextSec = 0;
+  //update info
+  if (now < nextSec) {
+    return;
+  }
+  matrix.fillScreen(LOW);
+  matrix.setCursor(0, 7);
+  if (timeNotSet == timeStatus()) {
+    matrix.print("synk.");
+  } else {
+    const auto local = get_local_time();
+    char buffMin[6];
+    sprintf_P(buffMin, "%2u:%02u", hour(local), minute(local));
+    matrix.print(buffMin);
+  }
+  matrix.write();
+  nextSec = now + 5000;
+}
+
+const std::array<int16_t, 4> itransforms = { 0, 200, 600, 1000 };
+void intensity_loop() {
+  const auto now = millis();
+  static long next = 0;
+  if (now < next) {
+    return;
+  }
+  next = now + 1000;
+  const auto val = ldr.get();
+  uint8_t level = 0;
+  for (const auto it : itransforms) {
+    if (val < it) {
+      break;
+    }
+    level++;
+  }
+  static uint8_t preLevel = 0;
+  if (preLevel != level) {
+    preLevel = level;
+    matrix.setIntensity(level);
+    Serial.print("matrix.setIntensity=");
+    Serial.println(level);
+  }
+}
 void loop() {
-  const long now = millis();
   wifi_loop();
- //   mqtt_loop();
-    CFilterLoop::loops();
+  mqtt_loop();
   ntpTime.loop();
-
-	//update info
-    if (now >= nextSec)
-	{
-        matrix.fillScreen(LOW);
-        matrix.setCursor(0, 7);
-        if(timeNotSet== timeStatus()){
-            matrix.print("synk.");
-        }else{
-            matrix.print(displayClock.getStrMin());
-        }
-        matrix.write();
-        nextSec = now + 5000;
-	}
+  time_loop();	
+  intensity_loop();
+  dimableLed.loop();
 }

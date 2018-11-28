@@ -20,7 +20,6 @@
 #include <pgmspace.h>
 
 #include "./libs/NTPtime.h"
-#include "CDisplayClock.h"
 #include "FreeMono9pt7b.h"
 
 #include "DHTesp.h"
@@ -35,8 +34,6 @@
 #else
 #include "secret.h"
 #endif
-
-#include "./libs/CFilter.h"
 #include "CDimableLed.h"
 
 #define ROOM 1
