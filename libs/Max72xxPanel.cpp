@@ -52,8 +52,7 @@ Max72xxPanel::Max72xxPanel(byte csPin, byte hDisplays, byte vDisplays) : Adafrui
   }
 
   SPI.begin();
-//SPI.setBitOrder(MSBFIRST);
-//SPI.setDataMode(SPI_MODE0);
+  SPI.setClockDivider(SPI_CLOCK_DIV128);
   pinMode(SPI_CS, OUTPUT);
 
   // Clear the screen
