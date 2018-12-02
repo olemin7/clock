@@ -29,14 +29,14 @@
 #include "./libs/CLightDetectResistor.h"
 
 #include "./libs/CMQTT.h"
-#if 1
+#if 0
 #include "secret.h_ex"
 #else
 #include "secret.h"
 #endif
 #include "CDimableLed.h"
 
-#define ROOM 1
+#define ROOM 2
 
 #if 1==ROOM
 #define ROOM_NAME "Parent"
@@ -49,8 +49,7 @@
 #define MQTT_HUMIDITY (MQTT_TEMPERATURE+1)
 #define DEVICE_NAME "CLOCK_" ROOM_NAME
 
-#define DEBUG
-
+//#define DEBUG
 
 
 #endif /* CLOCK_CLOCK_H_ */

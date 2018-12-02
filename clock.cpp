@@ -33,7 +33,6 @@ NTPtime ntpTime;
 CDimableLed dimableLed;
 CLightDetectResistor ldr;
 DHTesp dht;
-//US Eastern Time Zone (New York, Detroit)
 
 ESP8266WebServer server(80);
 CMQTT mqtt;
@@ -69,7 +68,8 @@ void setup() {
     matrix.write();
 
     setup_wifi(wifi_ssid, wifi_password, DEVICE_NAME);
-    mqtt.setup(mqtt_server, mqtt_port);
+  MDNS.begin(DEVICE_NAME);
+  mqtt.setup(mqtt_server, mqtt_port);
 	//--------------
 
 	ntpTime.init();
@@ -78,8 +78,14 @@ void setup() {
   dht.setup(DHTPin, DHTesp::DHT22);
 	//-----------------
   otaUpdater.setup(&server, update_path, ota_username, ota_password);
+  server.onNotFound([] {
+    Serial.println("Error no handler");
+    Serial.println(server.uri());
+  });
   mqtt.setClientID(DEVICE_NAME);
   sw_info(DEVICE_NAME, Serial);
+  server.begin();
+  MDNS.addService("http", "tcp", 80);
 	Serial.println("Setup done");
 }
 
@@ -183,4 +189,5 @@ void loop() {
   time_loop();	
   intensity_loop();
   dimableLed.loop();
+  server.handleClient();
 }
