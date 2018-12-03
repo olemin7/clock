@@ -52,7 +52,7 @@ Max72xxPanel::Max72xxPanel(byte csPin, byte hDisplays, byte vDisplays) : Adafrui
   }
 
   SPI.begin();
-  SPI.setClockDivider(SPI_CLOCK_DIV128);
+  SPI.setClockDivider(SPI_CLOCK_DIV32);
   pinMode(SPI_CS, OUTPUT);
 
   // Clear the screen
@@ -191,4 +191,5 @@ void Max72xxPanel::spiTransfer(byte opcode, byte data) {
 
 	// Latch the data onto the display(s)
 	digitalWrite(SPI_CS, HIGH);
+  delayMicroseconds(5);
 }

@@ -2,16 +2,16 @@
 #include "./libs/TimeLib.h"
 #include "./libs/Timezone.h"
 
-const int pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
-const int numberOfHorizontalDisplays = 4;
-const int numberOfVerticalDisplays = 1;
+const auto pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
+const auto numberOfHorizontalDisplays = 4;
+const auto numberOfVerticalDisplays = 1;
 
-const int DHTPin = D4;
+const auto DHTPin = D4;
 
 #ifndef DEBUG
-    const long MQTT_REFRESH_PERIOD=15*60*1000;
+const auto MQTT_REFRESH_PERIOD = 15 * 60 * 1000;
 #else
-    const long MQTT_REFRESH_PERIOD=5*1000;
+const auto MQTT_REFRESH_PERIOD=5*1000;
 #endif
 
 const char* update_path = "/firmware";
@@ -27,7 +27,7 @@ void setTime_(const time_t &par) {
   Serial.println("setTime_");
 }
 
-Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
+auto matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
 NTPtime ntpTime;
 CDimableLed dimableLed;
@@ -94,7 +94,7 @@ void mqtt_loop() {
         return;
     }
 
-    const long now = millis();
+  const auto now = millis();
     mqtt.loop();
     static long nextMsgMQTT = 0;
     if (now < nextMsgMQTT) {
