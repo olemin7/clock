@@ -148,7 +148,7 @@ void time_loop() {
   const auto local = get_local_time();
   static auto preMinute = static_cast<uint8_t>(0xff);
   const auto curMinute = minute(local);
-  if (curMinute == preMinute && 0xff == preMinute) {
+  if (curMinute == preMinute) {
     return;
   }
   preMinute = curMinute;

@@ -51,10 +51,9 @@ Max72xxPanel::Max72xxPanel(byte csPin, byte hDisplays, byte vDisplays) : Adafrui
   	matrixRotation[display] = 0;
   }
 
+  SPI.begin();
   pinMode(SPI_CS, OUTPUT);
   digitalWrite(SPI_CS, HIGH);
-  SPI.begin();
-  SPI.setDataMode(SPI_MODE0);
   SPI.setClockDivider(SPI_CLOCK_DIV32);
 
 
@@ -183,8 +182,8 @@ void Max72xxPanel::spiTransfer(byte opcode, byte data) {
 
 	// Now shift out the data, two bytes per display. The first byte is the opcode,
 	// the second byte the data.
-  auto end = opcode - OP_DIGIT0;
-  auto start = bitmapSize + end;
+  byte end = opcode - OP_DIGIT0;
+  byte start = bitmapSize + end;
 	do {
 		start -= 8;
 		SPI.transfer(opcode);
