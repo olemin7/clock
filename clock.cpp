@@ -43,31 +43,31 @@ void setup() {
   Serial.begin(115200);
   pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
   pinMode(DHTPin, INPUT);
-    delay(500);
-    dimableLed.setup();
-    Serial.println(DEVICE_NAME);
-    Serial.println("Compiled " __DATE__ " " __TIME__);
-    Serial.println();
+  delay(500);
+  dimableLed.setup();
+  Serial.println(DEVICE_NAME);
+  Serial.println("Compiled " __DATE__ " " __TIME__);
+  Serial.println();
 
-    hw_info(Serial);
+  hw_info(Serial);
 
-    matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
+  matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
 
-    matrix.setRotation(0, 1);
-    matrix.setRotation(1, 1);
-    matrix.setRotation(2, 1);
-    matrix.setRotation(3, 1);
+  matrix.setRotation(0, 1);
+  matrix.setRotation(1, 1);
+  matrix.setRotation(2, 1);
+  matrix.setRotation(3, 1);
 
-    matrix.setFont(&FreeMono9pt7b);
-    matrix.setTextWrap(false);
-    matrix.fillScreen(LOW);
-    matrix.setTextColor(HIGH, LOW);
-    matrix.setTextSize(1);
-    matrix.setCursor(0, 7);
-    matrix.print("init");
-    matrix.write();
+  matrix.setFont(&FreeMono9pt7b);
+  matrix.setTextWrap(false);
+  matrix.fillScreen(LOW);
+  matrix.setTextColor(HIGH, LOW);
+  matrix.setTextSize(1);
+  matrix.setCursor(0, 7);
+  matrix.print("init");
+  matrix.write();
 
-    setup_wifi(wifi_ssid, wifi_password, DEVICE_NAME);
+  setup_wifi(wifi_ssid, wifi_password, DEVICE_NAME);
   MDNS.begin(DEVICE_NAME);
   mqtt.setup(mqtt_server, mqtt_port);
 	//--------------
@@ -87,6 +87,10 @@ void setup() {
   server.begin();
   MDNS.addService("http", "tcp", 80);
 	Serial.println("Setup done");
+  matrix.fillScreen(LOW);
+  matrix.setCursor(0, 7);
+  matrix.print("--:--");
+  matrix.write();
 }
 
 void mqtt_loop() {
@@ -138,24 +142,22 @@ void mqtt_loop() {
 
 
 void time_loop() {
-  const auto now = millis();
-  static long nextSec = 0;
-  //update info
-  if (now < nextSec) {
+  if (timeNotSet == timeStatus()) {
     return;
   }
+  const auto local = get_local_time();
+  static auto preMinute = static_cast<uint8_t>(0xff);
+  const auto curMinute = minute(local);
+  if (curMinute == preMinute && 0xff == preMinute) {
+    return;
+  }
+  preMinute = curMinute;
   matrix.fillScreen(LOW);
   matrix.setCursor(0, 7);
-  if (timeNotSet == timeStatus()) {
-    matrix.print("synk.");
-  } else {
-    const auto local = get_local_time();
-    char buffMin[6];
-    sprintf_P(buffMin, "%2u:%02u", hour(local), minute(local));
-    matrix.print(buffMin);
-  }
+  char buffMin[6];
+  sprintf_P(buffMin, "%2u:%02u", hour(local), curMinute);
+  matrix.print(buffMin);
   matrix.write();
-  nextSec = now + 5000;
 }
 
 const std::array<int16_t, 4> itransforms = { 0, 200, 600, 1000 };
@@ -182,6 +184,7 @@ void intensity_loop() {
     Serial.println(level);
   }
 }
+
 void loop() {
   wifi_loop();
   mqtt_loop();

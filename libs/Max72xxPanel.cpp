@@ -51,9 +51,12 @@ Max72xxPanel::Max72xxPanel(byte csPin, byte hDisplays, byte vDisplays) : Adafrui
   	matrixRotation[display] = 0;
   }
 
-  SPI.begin();
-  SPI.setClockDivider(SPI_CLOCK_DIV32);
   pinMode(SPI_CS, OUTPUT);
+  digitalWrite(SPI_CS, HIGH);
+  SPI.begin();
+  SPI.setDataMode(SPI_MODE0);
+  SPI.setClockDivider(SPI_CLOCK_DIV32);
+
 
   // Clear the screen
   fillScreen(0);
@@ -165,7 +168,7 @@ void Max72xxPanel::drawPixel(int16_t xx, int16_t yy, uint16_t color) {
 void Max72xxPanel::write() {
 	// Send the bitmap buffer to the displays.
 
-	for ( byte row = OP_DIGIT7; row >= OP_DIGIT0; row-- ) {
+  for (auto row = OP_DIGIT7; row >= OP_DIGIT0; row--) {
 		spiTransfer(row);
 	}
 }
@@ -180,16 +183,16 @@ void Max72xxPanel::spiTransfer(byte opcode, byte data) {
 
 	// Now shift out the data, two bytes per display. The first byte is the opcode,
 	// the second byte the data.
-	byte end = opcode - OP_DIGIT0;
-	byte start = bitmapSize + end;
+  auto end = opcode - OP_DIGIT0;
+  auto start = bitmapSize + end;
 	do {
 		start -= 8;
 		SPI.transfer(opcode);
 		SPI.transfer(opcode <= OP_DIGIT7 ? bitmap[start] : data);
 	}
 	while ( start > end );
-
+  delayMicroseconds(2);	//wait for send date
 	// Latch the data onto the display(s)
 	digitalWrite(SPI_CS, HIGH);
-  delayMicroseconds(5);
+  delayMicroseconds(10);
 }
