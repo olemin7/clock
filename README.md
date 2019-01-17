@@ -39,9 +39,9 @@ TX  | TXD         | TXD          |
 RX  | RXD         | RXD          |
 A0  | ADC, 3.3V   | A0           | photoresistor
 D0  | IO          | GPIO16       |
-D1  | IO, SCL     | GPIO5        |
-D2  | IO, SDA     | GPIO4        |
-D3  | IO, 10k P-up| GPIO0        |
+D1  | IO, SCL     | GPIO5        | LedStript.in
+D2  | IO, SDA     | GPIO4        | WallSwitch.out
+D3  | IO, 10k P-up| GPIO0        | IRsensor.OUT
 D4  | IO, 10k P-up,LED|   GPIO2  | DHT.data
 D5  | IO, SCK     | GPIO14       | MAX7219.CLK
 D6  | IO, MISO    | GPIO12       | MAX7219.CS
@@ -78,4 +78,13 @@ RST | Reset       | RST          |
 4 CS (D6) !??D6 is MISO can it be used as GPO when SPI enabled? 
 5 CLK (SCK,D5)
 
+#IRsensor
+out (D3)
+
+#WallSwitch
+out (D2)
+
+#LedStript
+in (D1)
+ 
 https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#lists
