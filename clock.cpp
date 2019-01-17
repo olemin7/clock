@@ -2,11 +2,11 @@
 #include "./libs/TimeLib.h"
 #include "./libs/Timezone.h"
 
-const auto pinCS = 12; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
-const auto numberOfHorizontalDisplays = 4;
-const auto numberOfVerticalDisplays = 1;
+constexpr auto pinCS = D6;
+constexpr auto numberOfHorizontalDisplays = 4;
+constexpr auto numberOfVerticalDisplays = 1;
 
-const auto DHTPin = D4;
+constexpr auto DHTPin = D4;
 
 #ifndef DEBUG
 const auto MQTT_REFRESH_PERIOD = 15 * 60 * 1000;

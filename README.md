@@ -33,25 +33,49 @@ https://github.com/arduino/Arduino/blob/master/build/shared/manpage.adoc
 # esp8266 reference
 http://www.kloppenborg.net/blog/microcontrollers/2016/08/02/getting-started-with-the-esp8266
 
-Pin | | | | | comment
----:| --- | --- | --- | ---| ---
-1|	RST|
-2|ADC|TOUT
-3|CHIP_EN|CH_PD
-4|GPIO16|XPD_DCDC
-5|GPIO14|MTMS|HSPI_CLK
-6|GPIO12|MTDI|HSPI_MISO
-7|GPIO13|MTCK|HSPI_MOSI|U0CTS
-8|VCC
-15|GND
-16|GPIO15|MTDO|HSPI_CS|U0RTS
-17|GPIO2|U1TXD
-18|GPIO0|SPI_CS2
-19|GPIO4|SDA
-20|GPIO5|SCL
-21|GPIO3|U0RXD
-22|GPIO1|U0TXD|SPI_CS1
+##wemos
+Pin | Function    | ESP-8266 Pin | used
+TX  | TXD         | TXD          |
+RX  | RXD         | RXD          |
+A0  | ADC, 3.3V   | A0           | photoresistor
+D0  | IO          | GPIO16       |
+D1  | IO, SCL     | GPIO5        |
+D2  | IO, SDA     | GPIO4        |
+D3  | IO, 10k P-up| GPIO0        |
+D4  | IO, 10k P-up,LED|   GPIO2  | DHT.data
+D5  | IO, SCK     | GPIO14       | MAX7219.CLK
+D6  | IO, MISO    | GPIO12       | MAX7219.CS
+D7  | IO, MOSI    | GPIO13       | MAX7219.DIN
+D8  | IO, 10k P-down, SS|  GPIO15|
+G   | Ground      | GND          |
+5V  | 5V          | -            |
+3V3 | 3.3V        | 3.3V         |
+RST | Reset       | RST          |
 
 
+#ADC wemos
+ -----A0
+  |
+ 220K
+  |--- ADC
+ 100K
+  |
+ GND
+ 
+#photoresistor
+(+5) -termistor- (A0) -resistor 10k- (GND)
+
+#DHT
+1 vcc (5V)
+2 data (D4)
+3 nc
+4 GND (G)
+
+#Display MAX7219
+1 VCC (+5v)
+2 GND
+3 DIN (MOSI,D7)
+4 CS (D6) !??D6 is MISO can it be used as GPO when SPI enabled? 
+5 CLK (SCK,D5)
 
 https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#lists
