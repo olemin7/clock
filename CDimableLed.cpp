@@ -125,6 +125,7 @@ CIR_Control_handler irControl_handler(ledHandler);
 CSwitch_Control_handler switchControl_handler(ledHandler);
 
 void CDimableLed::setup(){
+  pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
   switchControl_handler.setup();
 }
 void CDimableLed::loop() {

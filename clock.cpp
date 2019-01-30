@@ -30,27 +30,18 @@ void setTime_(const time_t &par) {
 auto matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
 NTPtime ntpTime;
+#ifdef _USE_DIMABLE_LED_
 CDimableLed dimableLed;
+#endif
 CLightDetectResistor ldr;
+static uint8_t preLevel = 0;
 DHTesp dht;
 
 ESP8266WebServer server(80);
 CMQTT mqtt;
 ESP8266HTTPUpdateServer otaUpdater;
 
-void setup() {
-
-  Serial.begin(115200);
-  pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
-  pinMode(DHTPin, INPUT);
-  delay(500);
-  dimableLed.setup();
-  Serial.println(DEVICE_NAME);
-  Serial.println("Compiled " __DATE__ " " __TIME__);
-  Serial.println();
-
-  hw_info(Serial);
-
+void setup_matrix() {
   matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
 
   matrix.setRotation(0, 1);
@@ -66,7 +57,49 @@ void setup() {
   matrix.setCursor(0, 7);
   matrix.print("init");
   matrix.write();
+}
+void handleRoot() {
+  char temp[400];
+  const auto local = get_local_time();
+  snprintf(temp, sizeof(temp),
+  "<html>\
+  <head>\
+    <meta http-equiv='refresh' content='5'/>\
+    <title>" DEVICE_NAME "</title>\
+  </head>\
+  <body>\
+    "DEVICE_NAME "<br>\
+    timeStatus= %d <br>\
+    time: %02d:%02d <br>\
+        Temperature= %f <br>\
+        Humidity= %f <br>\
+        LDR=%d <br>\
+  </body>\
+</html>",
+      timeStatus(), hour(local), minute(local),
+      dht.getTemperature(),dht.getHumidity(),
+          preLevel
+      );
+  Serial.println(temp);
+  server.send(200, "text/html", temp);
 
+}
+void setup() {
+
+  Serial.begin(115200);
+  pinMode(DHTPin, INPUT);
+  delay(500);
+#ifdef _USE_DIMABLE_LED_
+  dimableLed.setup();
+#endif
+
+  Serial.println(DEVICE_NAME);
+  Serial.println("Compiled " __DATE__ " " __TIME__);
+  Serial.println();
+
+  hw_info(Serial);
+  setup_matrix();
+  
   setup_wifi(wifi_ssid, wifi_password, DEVICE_NAME);
   MDNS.begin(DEVICE_NAME);
   mqtt.setup(mqtt_server, mqtt_port);
@@ -78,14 +111,17 @@ void setup() {
   dht.setup(DHTPin, DHTesp::DHT22);
 	//-----------------
   otaUpdater.setup(&server, update_path, ota_username, ota_password);
+  server.on("/", handleRoot);
   server.onNotFound([] {
     Serial.println("Error no handler");
     Serial.println(server.uri());
   });
+
   mqtt.setClientID(DEVICE_NAME);
   sw_info(DEVICE_NAME, Serial);
   server.begin();
   MDNS.addService("http", "tcp", 80);
+
 	Serial.println("Setup done");
   matrix.fillScreen(LOW);
   matrix.setCursor(0, 7);
@@ -176,7 +212,6 @@ void intensity_loop() {
     }
     level++;
   }
-  static uint8_t preLevel = 0;
   if (preLevel != level) {
     preLevel = level;
     matrix.setIntensity(level);
@@ -191,6 +226,8 @@ void loop() {
   ntpTime.loop();
   time_loop();	
   intensity_loop();
+#ifdef _USE_DIMABLE_LED_
   dimableLed.loop();
+#endif
   server.handleClient();
 }
