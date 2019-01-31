@@ -66,7 +66,7 @@ RST | Reset       | RST          |
 (+5) -termistor- (A0) -resistor 10k- (GND)
 
 #DHT
-1 vcc (5V)
+1 vcc (3.3V)
 2 data (D4)
 3 nc
 4 GND (G)

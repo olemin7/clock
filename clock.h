@@ -8,6 +8,17 @@
 #ifndef CLOCK_CLOCK_H_
 #define CLOCK_CLOCK_H_
 
+#define ROOM 1
+
+#if 1==ROOM
+#define ROOM_NAME "Parent"
+#define _USE_DIMABLE_LED_
+#endif
+#if 2==ROOM
+#define ROOM_NAME "Children"
+#endif
+
+
 #include <SPI.h>
 #include "./libs/Max72xxPanel.h" // https://github.com/markruys/arduino-Max72xxPanel.git
 
@@ -29,20 +40,15 @@
 #include "./libs/CLightDetectResistor.h"
 
 #include "./libs/CMQTT.h"
-#if 0
+
+#if 1
 #include "secret.h_ex"
 #else
 #include "secret.h"
 #endif
+
+#ifdef _USE_DIMABLE_LED_
 #include "CDimableLed.h"
-
-#define ROOM 2
-
-#if 1==ROOM
-#define ROOM_NAME "Parent"
-#endif
-#if 2==ROOM
-#define ROOM_NAME "Children"
 #endif
 
 #define MQTT_TEMPERATURE (1+(ROOM-1)*2)

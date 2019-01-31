@@ -73,21 +73,21 @@ void handleRoot() {
     time: %02d:%02d <br>\
         Temperature= %f <br>\
         Humidity= %f <br>\
-        LDR=%d <br>\
+        LDR=%d (%d)<br>\
   </body>\
 </html>",
       timeStatus(), hour(local), minute(local),
       dht.getTemperature(),dht.getHumidity(),
-          preLevel
+      preLevel, ldr.get()
       );
-  Serial.println(temp);
+  //Serial.println(temp);
   server.send(200, "text/html", temp);
 
 }
 void setup() {
 
   Serial.begin(115200);
-  pinMode(DHTPin, INPUT);
+  //pinMode(DHTPin, INPUT); setted in driver
   delay(500);
 #ifdef _USE_DIMABLE_LED_
   dimableLed.setup();
@@ -196,7 +196,7 @@ void time_loop() {
   matrix.write();
 }
 
-const std::array<int16_t, 4> itransforms = { 0, 200, 600, 1000 };
+const auto itransforms = std::array<int16_t, 4> { 250, 500, 750, 1000 };
 void intensity_loop() {
   const auto now = millis();
   static long next = 0;
@@ -216,7 +216,9 @@ void intensity_loop() {
     preLevel = level;
     matrix.setIntensity(level);
     Serial.print("matrix.setIntensity=");
-    Serial.println(level);
+    Serial.print(level);
+    Serial.print(",");
+    Serial.println(val);
   }
 }
 
