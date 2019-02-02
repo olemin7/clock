@@ -6,7 +6,8 @@ void setup_wifi(const char *ssid, const char *password, const char *aHostname =
         NULL) {
   // We start by connecting to a WiFi network
   Serial.println();
-    WiFi.persistent(false);
+  //   WiFi.persistent(false);
+  WiFi.setPhyMode(WIFI_PHY_MODE_11N);
     WiFi.mode(WIFI_STA);
     if (NULL != aHostname) {
         WiFi.hostname(aHostname);
@@ -16,7 +17,6 @@ void setup_wifi(const char *ssid, const char *password, const char *aHostname =
     }
   Serial.print("Connecting to ");
   Serial.println(ssid);
-
 
   WiFi.begin(ssid, password);
 }

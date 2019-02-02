@@ -15,12 +15,17 @@ class CLed_Handler {
 	int ledValue=-1;
 	void setLedValue(int Value) {
 		ledValue = Value;
-	    analogWrite(GPIO_POUT_LED, Value);
-	    Serial.printf("DIMABLE_LED_VAL %d\n", Value);
+    analogWrite(GPIO_POUT_LED, Value);
+    Serial.print("DIMABLE_LED_VAL ");
+    Serial.println(Value);
 	}
 public:
+  void setup() {
+    pinMode(GPIO_POUT_LED, OUTPUT);
+  }
   void cmd(led_cmd_t cmd) {
-		  Serial.printf("LED CMD %d\n", cmd);
+    Serial.print("LED CMD ");
+    Serial.println(cmd);
 		  switch(cmd){
       case CMD_LED_OFF:
         setLedValue(LED_OFF);
@@ -100,11 +105,12 @@ class CSwitch_Control_handler {
   }
   ;
 		void setup(){
+    pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
     preVal_ = read_switch_raw();
     event_timeout = 0;
 	}
   void loop() {
-    const auto cur = now();
+    const auto cur = millis();
     const auto value = read_switch_raw();
     if (value != preVal_) {
       event_timeout = cur + 100;
@@ -125,7 +131,7 @@ CIR_Control_handler irControl_handler(ledHandler);
 CSwitch_Control_handler switchControl_handler(ledHandler);
 
 void CDimableLed::setup(){
-  pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
+  ledHandler.setup();
   switchControl_handler.setup();
 }
 void CDimableLed::loop() {

@@ -41,7 +41,7 @@
 
 #include "./libs/CMQTT.h"
 
-#if 1
+#if 0
 #include "secret.h_ex"
 #else
 #include "secret.h"

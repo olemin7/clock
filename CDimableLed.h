@@ -17,14 +17,14 @@ typedef enum {
   CMD_LED_TOGGLE_STATE
 } led_cmd_t;
 
-const int GPIO_POUT_LED 	    =D1;
-const int GPIO_PIN_WALL_SWITCH 	=D2;
-const int GPIO_PIN_IRsensor     =D3;
+constexpr auto GPIO_POUT_LED = D1;
+constexpr auto GPIO_PIN_WALL_SWITCH = D2;
+constexpr auto GPIO_PIN_IRsensor = D3;
 
-const int LED_OFF         =0;
-const int LED_NIGHT       =1;
-const int LED_NIGHT_HIGHT =(PWMRANGE/4);
-const int LED_HIGHT       =PWMRANGE;
+constexpr auto LED_OFF = 0;
+constexpr auto LED_NIGHT = 2;
+constexpr auto LED_NIGHT_HIGHT = (PWMRANGE / 4);
+constexpr auto LED_HIGHT = PWMRANGE;
 
 class CDimableLed {
 public:
