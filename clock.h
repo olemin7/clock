@@ -8,14 +8,16 @@
 #ifndef CLOCK_CLOCK_H_
 #define CLOCK_CLOCK_H_
 
-#define ROOM 1
+#define ROOM 2
 
 #if 1==ROOM
 #define ROOM_NAME "Parent"
 #define _USE_DIMABLE_LED_
+#define LED_MATRIX_ROTATION 1
 #endif
 #if 2==ROOM
 #define ROOM_NAME "Children"
+#define LED_MATRIX_ROTATION 3
 #endif
 
 

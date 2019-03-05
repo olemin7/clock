@@ -43,12 +43,12 @@ ESP8266HTTPUpdateServer otaUpdater;
 
 void setup_matrix() {
   matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
-
-  matrix.setRotation(0, 1);
-  matrix.setRotation(1, 1);
-  matrix.setRotation(2, 1);
-  matrix.setRotation(3, 1);
-
+#ifdef  LED_MATRIX_ROTATION
+  matrix.setRotation(0, LED_MATRIX_ROTATION);
+  matrix.setRotation(1, LED_MATRIX_ROTATION);
+  matrix.setRotation(2, LED_MATRIX_ROTATION);
+  matrix.setRotation(3, LED_MATRIX_ROTATION);
+#endif //LED_MATRIX_ROTATION
   matrix.setFont(&FreeMono9pt7b);
   matrix.setTextWrap(false);
   matrix.fillScreen(LOW);
