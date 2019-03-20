@@ -14,16 +14,17 @@
 #define ROOM_NAME "Parent"
 #define _USE_DIMABLE_LED_
 #define LED_MATRIX_ROTATION 1
+#define MQTT_ENABLE
 #endif
 #if 2==ROOM
 #define ROOM_NAME "Children"
 #define LED_MATRIX_ROTATION 3
+#define MQTT_ENABLE
 #endif
 
 
 #include <SPI.h>
 #include "./libs/Max72xxPanel.h" // https://github.com/markruys/arduino-Max72xxPanel.git
-
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
