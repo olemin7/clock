@@ -1,6 +1,4 @@
+.pio
 secret.h
-.ino.cpp 
-obj/
-/Release/
-/build
+wifi.json
 
