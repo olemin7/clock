@@ -14,12 +14,10 @@
 #define ROOM_NAME "Parent"
 #define _USE_DIMABLE_LED_
 #define LED_MATRIX_ROTATION 1
-#define MQTT_ENABLE
 #endif
 #if 2==ROOM
 #define ROOM_NAME "Children"
 #define LED_MATRIX_ROTATION 3
-#define MQTT_ENABLE
 #endif
 
 

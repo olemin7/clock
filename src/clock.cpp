@@ -1,6 +1,7 @@
 #include "clock.h"
 #include "./libs/TimeLib.h"
 #include "./libs/Timezone.h"
+#include "./libs/logs.h"
 
 constexpr auto pinCS = D6;
 constexpr auto numberOfHorizontalDisplays = 4;
@@ -38,9 +39,7 @@ static uint8_t preLevel = 0;
 DHTesp dht;
 
 ESP8266WebServer server(80);
-#ifdef MQTT_ENABLE
 CMQTT mqtt;
-#endif
 ESP8266HTTPUpdateServer otaUpdater;
 
 void setup_matrix() {
@@ -94,19 +93,15 @@ void setup() {
 #ifdef _USE_DIMABLE_LED_
   dimableLed.setup();
 #endif
-
-  Serial.println(DEVICE_NAME);
-  Serial.println("Compiled " __DATE__ " " __TIME__);
-  Serial.println();
+    DBG_PRINTLN(DEVICE_NAME);
+    DBG_PRINTLN("Compiled " __DATE__ " " __TIME__);
 
   hw_info(Serial);
   setup_matrix();
   
   setup_wifi(wifi_ssid, wifi_password, DEVICE_NAME);
   MDNS.begin(DEVICE_NAME);
-#ifdef MQTT_ENABLE
   mqtt.setup(mqtt_server, mqtt_port);
-#endif
 	//--------------
 
 	ntpTime.init();
@@ -120,9 +115,7 @@ void setup() {
     Serial.println("Error no handler");
     Serial.println(server.uri());
   });
-#ifdef MQTT_ENABLE
   mqtt.setClientID(DEVICE_NAME);
-#endif
   sw_info(DEVICE_NAME, Serial);
   server.begin();
   MDNS.addService("http", "tcp", 80);
@@ -135,7 +128,6 @@ void setup() {
 }
 
 void mqtt_loop() {
-#ifdef MQTT_ENABLE
     if (WL_CONNECTED != WiFi.status()) {
         return;
     }
@@ -179,7 +171,6 @@ void mqtt_loop() {
     Serial.print(" [");
     Serial.print(data);
     Serial.println("]");
-#endif
 }
 
 
