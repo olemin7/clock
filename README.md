@@ -78,8 +78,11 @@ RST | Reset       | RST          |
 4 CS (D6) !??D6 is MISO can it be used as GPO when SPI enabled? 
 5 CLK (SCK,D5)
 
-#IRsensor
+#IRsensor 
+(see from front)
 out (D3)
+gnd
+vcc
 
 #WallSwitch
 out (D2)
