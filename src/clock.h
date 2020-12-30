@@ -20,7 +20,7 @@
 #define LED_MATRIX_ROTATION 3
 #endif
 
-
+#include <Arduino.h>
 #include <SPI.h>
 #include "./libs/Max72xxPanel.h" // https://github.com/markruys/arduino-Max72xxPanel.git
 #include <ESP8266WiFi.h>
@@ -30,17 +30,22 @@
 
 #include <Wire.h> // must be included here so that Arduino library object file references work
 #include <pgmspace.h>
+#include <stdio.h>
+#include <iostream>
+#include <sstream>
 
 #include "./libs/NTPtime.h"
 #include "FreeMono9pt7b.h"
 
 #include "DHTesp.h"
 
-//#include "libpack.h"
 #include "./libs/unsorted.h"
 #include "./libs/CLightDetectResistor.h"
 
 #include "./libs/CMQTT.h"
+#include "./libs/misk.h"
+#include "./libs/wifiHandle.h"
+
 
 #if 1
 #include "secret.h_ex"
@@ -55,8 +60,12 @@
 #define MQTT_TEMPERATURE (1+(ROOM-1)*2)
 #define MQTT_HUMIDITY (MQTT_TEMPERATURE+1)
 #define DEVICE_NAME "CLOCK_" ROOM_NAME
+#define DEF_AP_PWD "12345678"
 
-//#define DEBUG
+#define DEBUG
 
+#define SERIAL_BAUND 115200
+#define SERVER_PORT_WEB 80
+#define WIFI_CONNECT_TIMEOUT 20000 //ms
 
 #endif /* CLOCK_CLOCK_H_ */

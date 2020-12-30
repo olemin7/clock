@@ -38,9 +38,10 @@ CLightDetectResistor ldr;
 static uint8_t preLevel = 0;
 DHTesp dht;
 
-ESP8266WebServer server(80);
+ESP8266WebServer serverWeb(SERVER_PORT_WEB);
 CMQTT mqtt;
 ESP8266HTTPUpdateServer otaUpdater;
+
 
 void setup_matrix() {
   matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
@@ -59,72 +60,126 @@ void setup_matrix() {
   matrix.print("init");
   matrix.write();
 }
-void handleRoot() {
-  char temp[400];
-  const auto local = get_local_time();
-  snprintf(temp, sizeof(temp),
-  "<html>\
-  <head>\
-    <meta http-equiv='refresh' content='5'/>\
-    <title>" DEVICE_NAME "</title>\
-  </head>\
-  <body>\
-    "DEVICE_NAME "<br>\
-    timeStatus= %d <br>\
-    time: %02d:%02d <br>\
-        Temperature= %f <br>\
-        Humidity= %f <br>\
-        LDR=%d (%d)<br>\
-  </body>\
-</html>",
-      timeStatus(), hour(local), minute(local),
-      dht.getTemperature(),dht.getHumidity(),
-      preLevel, ldr.get()
-      );
-  //Serial.println(temp);
-  server.send(200, "text/html", temp);
 
+void http_about()
+{
+    DBG_PRINTLN("http_about ");
+    serverWeb.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    serverWeb.sendHeader("Content-Type", "text/plain", true);
+    std::ostringstream sAbout;
+
+    sAbout << "Compiled :" << __DATE__ << " " << __TIME__ << std::endl;
+    sAbout << "Serial Speed " << SERIAL_BAUND  << std::endl;
+    sAbout << getResetInfo().c_str() << std::endl;
+    sAbout << "RSSI " << WiFi.RSSI() << std::endl;
+
+    sAbout << std::endl;
+
+    const auto local = get_local_time();
+    sAbout << "timeStatus= " << timeStatus();
+    sAbout << "time: " << hour(local)<< ":"<< minute(local)<<std::endl;
+    sAbout <<"Temperature= " << dht.getTemperature() << ", Humidity=" << dht.getHumidity() << std::endl;
+    sAbout << "LDR=" << ldr.get() << std::endl;
+
+    serverWeb.sendContent(sAbout.str().c_str());
+#ifdef DEBUG_STREAM
+    serverWeb.sendContent( "\nDEBUG_STREAM on");
+#endif
+//    serverWeb.sendContent(sAbout.str().c_str());
+//    about = "\n";
+//    hw_info(stream_about);
+//    serverWeb.sendContent(about);
+//    about = "\n";
+//    SPIFFS_info(stream_about);
+//    serverWeb.sendContent(about);
+//    about = "\n";
+
+    //---------------
+    serverWeb.sendContent("");
 }
-void setup() {
 
-  Serial.begin(115200);
-  //pinMode(DHTPin, INPUT); setted in driver
-  delay(500);
+void  setup_WebPages(){
+	serverWeb.on("/", http_about);
+    serverWeb.on("/scanwifi", HTTP_ANY,
+            [&]()
+            {
+    		wifiHandle_sendlist(serverWeb);
+            });
+    serverWeb.on("/connectwifi", HTTP_ANY,
+            [&]()
+            {
+    		wifiHandle_connect(serverWeb);
+            });
+	serverWeb.onNotFound([] {
+		Serial.println("Error no handler");
+		Serial.println(serverWeb.uri());
+	});
+}
+
+void  setup_WIFIConnect(){
+
+    if (WIFI_STA == WiFi.getMode())
+    {
+    	const auto now = millis()+WIFI_CONNECT_TIMEOUT;
+		std::cout << "connecting <"<<WiFi.SSID()<<"> ";
+		while(now > millis()){
+			if (WL_CONNECTED == WiFi.status()) {
+				std::cout <<"IP:"<< WiFi.localIP().toString().c_str() << std::endl;
+				return;
+			}
+			blink();
+		}
+		//temorarry server
+
+		std::cout <<"fail"<< std::endl;
+		WiFi.persistent(false);
+		WiFi.softAP(DEVICE_NAME, DEF_AP_PWD);
+		std::cout << "AP " << DEVICE_NAME << ",pwd: " << DEF_AP_PWD << ",ip:"<< WiFi.softAPIP().toString().c_str()<<std::endl;
+    }else{
+    	std::cout << "AP " << WiFi.hostname() << " " << WiFi.softAPIP().toString().c_str();
+    }
+}
+
+void setup() {
+	pinMode(LED_BUILTIN, OUTPUT);
+
+	Serial.begin(SERIAL_BAUND);
+	DBG_PRINTLN(DEVICE_NAME);
+	DBG_PRINTLN("Compiled " __DATE__ " " __TIME__);
+	//pinMode(DHTPin, INPUT); setted in driver
+	SPIFFS.begin();
+	MDNS.begin(DEVICE_NAME);
+	otaUpdater.setup(&serverWeb, update_path, ota_username, ota_password);
+	setup_WebPages();
+	MDNS.addService("http", "tcp", SERVER_PORT_WEB);
 #ifdef _USE_DIMABLE_LED_
   dimableLed.setup();
 #endif
-    DBG_PRINTLN(DEVICE_NAME);
-    DBG_PRINTLN("Compiled " __DATE__ " " __TIME__);
 
-  hw_info(Serial);
-  setup_matrix();
+
+    hw_info(Serial);
+    setup_matrix();
   
-  setup_wifi(wifi_ssid, wifi_password, DEVICE_NAME);
-  MDNS.begin(DEVICE_NAME);
-  mqtt.setup(mqtt_server, mqtt_port);
+    mqtt.setup(mqtt_server, mqtt_port);
 	//--------------
 
 	ntpTime.init();
-  ntpTime.setCallback(setTime_);
+	ntpTime.setCallback(setTime_);
 	//------------------
-  dht.setup(DHTPin, DHTesp::DHT22);
+	dht.setup(DHTPin, DHTesp::DHT22);
 	//-----------------
-  otaUpdater.setup(&server, update_path, ota_username, ota_password);
-  server.on("/", handleRoot);
-  server.onNotFound([] {
-    Serial.println("Error no handler");
-    Serial.println(server.uri());
-  });
-  mqtt.setClientID(DEVICE_NAME);
-  sw_info(DEVICE_NAME, Serial);
-  server.begin();
-  MDNS.addService("http", "tcp", 80);
 
-	Serial.println("Setup done");
-  matrix.fillScreen(LOW);
-  matrix.setCursor(0, 7);
-  matrix.print("--:--");
-  matrix.write();
+	mqtt.setClientID(DEVICE_NAME);
+	serverWeb.begin();
+
+	sw_info(DEVICE_NAME, Serial);
+
+	matrix.fillScreen(LOW);
+	matrix.setCursor(0, 7);
+	matrix.print("--:--");
+	matrix.write();
+	setup_WIFIConnect();
+	std::cout << "Setup done" << std::endl;
 }
 
 void mqtt_loop() {
@@ -229,5 +284,5 @@ void loop() {
 #ifdef _USE_DIMABLE_LED_
   dimableLed.loop();
 #endif
-  server.handleClient();
+  serverWeb.handleClient();
 }

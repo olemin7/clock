@@ -47,24 +47,6 @@ void sw_info(char const *fwName,Stream &Out){
 	Out.printf("FreeHeap:   %d\n", ESP.getFreeHeap());
 }
 
-void hw_info(Stream &Out){
-	Out.println("hw_info");
-    uint32_t realSize = ESP.getFlashChipRealSize();
-    uint32_t ideSize = ESP.getFlashChipSize();
-    FlashMode_t ideMode = ESP.getFlashChipMode();
-    Out.println("Flash info");
-    Out.printf("id:   %08X\n", ESP.getFlashChipId());
-    Out.printf("size: %u\n", realSize);
-    if(ideSize != realSize) {
-    	Out.printf("\n!!Different size\nFlash IDE size: %u\n\n", ideSize);
-    }
-    Out.printf("ide speed: %u\n", ESP.getFlashChipSpeed());
-    Out.printf("ide mode:  %s\n", (ideMode == FM_QIO ? "QIO" : ideMode == FM_QOUT ? "QOUT" : ideMode == FM_DIO ? "DIO" : ideMode == FM_DOUT ? "DOUT" : "UNKNOWN"));
-    Out.println("end Flash info");
-
-
-}
-
 /*******************************************************************************
  *
  */
