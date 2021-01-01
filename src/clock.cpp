@@ -1,7 +1,5 @@
 #include "clock.h"
-#include "./libs/TimeLib.h"
-#include "./libs/Timezone.h"
-#include "./libs/logs.h"
+using namespace std;
 
 constexpr auto pinCS = D6;
 constexpr auto numberOfHorizontalDisplays = 4;
@@ -99,7 +97,7 @@ void http_about()
 }
 
 void  setup_WebPages(){
-	serverWeb.on("/", http_about);
+	serverWeb.on("/about", http_about);
     serverWeb.on("/scanwifi", HTTP_ANY,
             [&]()
             {
@@ -110,6 +108,10 @@ void  setup_WebPages(){
             {
     		wifiHandle_connect(serverWeb);
             });
+
+	serverWeb.serveStatic("/", LittleFS, "/www/index.html");
+	serverWeb.serveStatic("/css", LittleFS, "/www/css");
+	serverWeb.serveStatic("/js", LittleFS, "/www/cjs");
 	serverWeb.onNotFound([] {
 		Serial.println("Error no handler");
 		Serial.println(serverWeb.uri());
@@ -117,26 +119,26 @@ void  setup_WebPages(){
 }
 
 void  setup_WIFIConnect(){
-
+	WiFi.begin();
     if (WIFI_STA == WiFi.getMode())
     {
     	const auto now = millis()+WIFI_CONNECT_TIMEOUT;
-		std::cout << "connecting <"<<WiFi.SSID()<<"> ";
+		cout << "connecting <"<<WiFi.SSID()<<"> ";
 		while(now > millis()){
 			if (WL_CONNECTED == WiFi.status()) {
-				std::cout <<"IP:"<< WiFi.localIP().toString().c_str() << std::endl;
+				cout <<"IP:"<< WiFi.localIP().toString() << endl;
 				return;
 			}
 			blink();
 		}
-		//temorarry server
-
-		std::cout <<"fail"<< std::endl;
+		//Temporary server
+		//todo add key to swith
+		cout <<"fail"<< std::endl;
 		WiFi.persistent(false);
 		WiFi.softAP(DEVICE_NAME, DEF_AP_PWD);
-		std::cout << "AP " << DEVICE_NAME << ",pwd: " << DEF_AP_PWD << ",ip:"<< WiFi.softAPIP().toString().c_str()<<std::endl;
+		cout << "AP " << DEVICE_NAME << ",pwd: " << DEF_AP_PWD << ",ip:"<< WiFi.softAPIP().toString()<<std::endl;
     }else{
-    	std::cout << "AP " << WiFi.hostname() << " " << WiFi.softAPIP().toString().c_str();
+    	cout << "AP " << WiFi.hostname() << " " << WiFi.softAPIP().toString();
     }
 }
 
@@ -147,7 +149,7 @@ void setup() {
 	DBG_PRINTLN(DEVICE_NAME);
 	DBG_PRINTLN("Compiled " __DATE__ " " __TIME__);
 	//pinMode(DHTPin, INPUT); setted in driver
-	SPIFFS.begin();
+	LittleFS.begin();
 	MDNS.begin(DEVICE_NAME);
 	otaUpdater.setup(&serverWeb, update_path, ota_username, ota_password);
 	setup_WebPages();
@@ -157,7 +159,7 @@ void setup() {
 #endif
 
 
-    hw_info(Serial);
+    hw_info(cout);
     setup_matrix();
   
     mqtt.setup(mqtt_server, mqtt_port);
@@ -179,7 +181,7 @@ void setup() {
 	matrix.print("--:--");
 	matrix.write();
 	setup_WIFIConnect();
-	std::cout << "Setup done" << std::endl;
+	cout << "Setup done" << endl;
 }
 
 void mqtt_loop() {

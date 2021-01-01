@@ -9,16 +9,18 @@
 #ifndef UNIT_TEST
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include "FatLib/ostream.h"
 #include <string>
+#include <ostream>
+
+std::ostream& operator<<(std::ostream& os, const String& str);
 
 void LED_ON();
 void LED_OFF();
 void blink();
 
 String getMimeType(String path);
-void hw_info(Stream &Out);
-void SPIFFS_info(Stream &out_stream);
+void hw_info(std::ostream &out);
+void SPIFFS_info(std::ostream &out);
 
 typedef enum {
     er_ok = 0,

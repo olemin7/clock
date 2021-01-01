@@ -27,6 +27,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
+#include "LittleFS.h"
 
 #include <Wire.h> // must be included here so that Arduino library object file references work
 #include <pgmspace.h>
@@ -45,13 +46,12 @@
 #include "./libs/CMQTT.h"
 #include "./libs/misk.h"
 #include "./libs/wifiHandle.h"
+#include "./libs/TimeLib.h"
+#include "./libs/Timezone.h"
+#include "./libs/logs.h"
 
-
-#if 1
 #include "secret.h_ex"
-#else
-#include "secret.h"
-#endif
+
 
 #ifdef _USE_DIMABLE_LED_
 #include "CDimableLed.h"

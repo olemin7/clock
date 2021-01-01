@@ -13,5 +13,5 @@
 
 void wifiHandle_loop();
 void wifiHandle_sendlist(ESP8266WebServer &server);
-void wifiHandle_connect(ESP8266WebServer &server);
+void wifiHandle_connect(ESP8266WebServer &server,bool pers = true);
 void setup_wifi(const String &ssid, const String &pwd, const String &host_name, const WiFiMode_t &wifi_mode);

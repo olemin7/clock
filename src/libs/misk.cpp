@@ -6,20 +6,26 @@
  */
 #include "misk.h"
 #include "logs.h"
-#include <FS.h>
-#include "FatLib/ArduinoStream.h"
+#include "LittleFS.h"
 #include <stdio.h>
 #include <sstream>
-using namespace sdfat;
+using namespace std;
+
+ostream& operator<<(ostream& os, const String& str){
+	os << str.c_str();
+	return os;
+}
 
 void LED_ON()
 {
     digitalWrite(LED_BUILTIN, LOW);
 }
+
 void LED_OFF()
 {
     digitalWrite(LED_BUILTIN, HIGH);
 }
+
 void blink()
 {
     LED_ON();
@@ -78,63 +84,62 @@ String getMimeType(String path)
     return "application/octet-stream";
 }
 
-void hw_info(Stream &Out)
+void hw_info(std::ostream &out)
 {
-    Out.println("hw_info");
-    Out.printf("CpuFreqMHz %u \n", ESP.getCpuFreqMHz());
-    Out.printf("getFreeHeap %u \n", ESP.getFreeHeap());
-    auto realSize = ESP.getFlashChipRealSize();
-    auto ideSize = ESP.getFlashChipSize();
-    auto ideMode = ESP.getFlashChipMode();
-    Out.println("Flash info");
-    Out.printf("id:   %08X\n", ESP.getFlashChipId());
-    Out.printf("size: %u\n", realSize);
-    if (ideSize != realSize)
-    {
-        Out.printf("\n!!Different size\nFlash IDE size: %u\n\n", ideSize);
-    }
-    Out.printf("ide speed: %u\n", ESP.getFlashChipSpeed());
-    Out.print("ide mode: ");
-    switch (ideMode)
-    {
-        case FM_QIO:
-            Out.println("QIO");
-            break;
-        case FM_QOUT:
-            Out.println("QOUT");
-            break;
-        case FM_DIO:
-            Out.println("DIO");
-            break;
-        case FM_DOUT:
-            Out.println("DOUT");
-            break;
-        default:
-            Out.print(ideMode);
-            Out.println("UNKNOWN");
-    }
-    Out.println("end Flash info");
+	out << "hw_info ->" << endl;
+//    Out.printf("CpuFreqMHz %u \n", ESP.getCpuFreqMHz());
+//    Out.printf("getFreeHeap %u \n", ESP.getFreeHeap());
+//    auto realSize = ESP.getFlashChipRealSize();
+//    auto ideSize = ESP.getFlashChipSize();
+//    auto ideMode = ESP.getFlashChipMode();
+//    Out.println("Flash info");
+//    Out.printf("id:   %08X\n", ESP.getFlashChipId());
+//    Out.printf("size: %u\n", realSize);
+//    if (ideSize != realSize)
+//    {
+//        Out.printf("\n!!Different size\nFlash IDE size: %u\n\n", ideSize);
+//    }
+//    Out.printf("ide speed: %u\n", ESP.getFlashChipSpeed());
+//    Out.print("ide mode: ");
+//    switch (ideMode)
+//    {
+//        case FM_QIO:
+//            Out.println("QIO");
+//            break;
+//        case FM_QOUT:
+//            Out.println("QOUT");
+//            break;
+//        case FM_DIO:
+//            Out.println("DIO");
+//            break;
+//        case FM_DOUT:
+//            Out.println("DOUT");
+//            break;
+//        default:
+//            Out.print(ideMode);
+//            Out.println("UNKNOWN");
+//    }
+    out<<"<- Flash info";
 }
 
-void SPIFFS_info(Stream &out_stream)
+void SPIFFS_info(std::ostream &out)
 {
-    ArduinoOutStream cout(out_stream);
-    cout << "SPIFFS_info" << endl;
-    FSInfo info;
-    SPIFFS.info(info);
-
-    cout << "Total:" << info.totalBytes << endl;
-    cout << "Used:" << info.usedBytes << endl;
-    cout << "nBlock:" << info.blockSize << " Page:" << info.pageSize << endl;
-    cout << "nMax open files:" << info.maxOpenFiles << endl;
-    cout << "maxPathLength:" << info.maxPathLength << endl;
-
-    cout << "SPIFFS files:" << endl;
-    auto dir = SPIFFS.openDir("/");
-    while (dir.next())
-    {
-        cout << dir.fileName() << " SZ:" << dir.fileSize() << endl;
-    }
+    out << "SPIFFS_info" << endl;
+//    FSInfo info;
+//    SPIFFS.info(info);
+//
+//    cout << "Total:" << info.totalBytes << endl;
+//    cout << "Used:" << info.usedBytes << endl;
+//    cout << "nBlock:" << info.blockSize << " Page:" << info.pageSize << endl;
+//    cout << "nMax open files:" << info.maxOpenFiles << endl;
+//    cout << "maxPathLength:" << info.maxPathLength << endl;
+//
+//    cout << "SPIFFS files:" << endl;
+//    auto dir = SPIFFS.openDir("/");
+//    while (dir.next())
+//    {
+//        cout << dir.fileName() << " SZ:" << dir.fileSize() << endl;
+//    }
 }
 
 void webRetResult(ESP8266WebServer &server, te_ret res)

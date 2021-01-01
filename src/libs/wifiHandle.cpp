@@ -56,7 +56,7 @@ void wifiHandle_loop(){
     }
 }
 
-void wifiHandle_connect(ESP8266WebServer &server){
+void wifiHandle_connect(ESP8266WebServer &server,bool pers ){
 
 	auto retVal = er_last;
 	String ssid;
@@ -78,6 +78,7 @@ void wifiHandle_connect(ESP8266WebServer &server){
 
 	webRetResult(server,retVal);
 	if(er_ok==retVal){
+		WiFi.persistent(pers);
 		delay(500);
 	    DBG_PRINT(F("ssid:"));
 	    DBG_PRINT(ssid);
