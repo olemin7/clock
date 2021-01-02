@@ -1,25 +1,10 @@
 <html>
 <head>
-    <title>marweb ui</title>
-    <style>
-        .engraver{
-            display : none!important;
-        }
-    </style>
-    <script>
-var fsbrowser_impl;
+    <title>clock ui</title>
 
-function onIndexLoad() {
-    document.getElementById('emergency_off').innerHTML = get_icon_svg("fire", "1.3em", "1.2em")
-    document.getElementById('emergency_off').innerHTML += get_icon_svg("off", "1.3em", "1.2em")    
-    document.getElementById('power_off').innerHTML = get_icon_svg("off", "1.3em", "1.2em")
-    init_command_panel();
-    init_temperature_panel();    
-    init_engraver_panel();
-    init_controls_panel();
-    loadmacrolist("macrocfg.json");
-    init_fsbrowser();
-    fsbrowser_impl=new fsbrowser("id_fsbrowser_placeholder","fsbrowser_impl",engraver_selectFile,true);
+    <script>
+
+function onIndexLoad(status){
 }
 
 function on_statusUpdate(status){
@@ -33,18 +18,10 @@ function on_statusUpdate(status){
 
     </script>
     <script src="js/jquery-3.4.1.js"></script>
-    <script src="js/bootstrap.js"></script>
-    <script src="js/defaults.js"></script>
+    <script src="js/bootstrap.min.js"></script>
     <script src="js/icons.js"></script>
-    <script src="js/commands.js"></script>
-    <script src="js/http.js"></script>
     <script src="js/smoothie.js"></script>
-    <script src="js/temperatures.js"></script>
-    <script src="js/fsbrowser.js"></script>
-    <script src="js/controls.js"></script>
-    <script src="js/engraver.js"></script> 
-    <script src="js/scanwifi.js"></script>
-    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
 </head>
 <body onload="onIndexLoad()">
@@ -56,364 +33,27 @@ function on_statusUpdate(status){
         <li class="nav-item">
             <a class="nav-link" href="/firmware">firmware</a>
         </li>
-    </ul>
-    <ul class="navbar-nav ml-auto">
         <li class="nav-item">
-            <button class="btn btn-lg btn-success" id="id_cancel_InactivityShutdown" onclick="marlin_addCommand(cmd_cancelShutdown)" >cancel Shutdown</button>  
-            <button class="btn btn-lg btn-danger" id="emergency_off" onclick="emergency_off()" ></button>                
-            <button class="btn btn-lg btn-danger" id=power_off onclick="power_off()"></button>
+            <a class="nav-link" href="/wifi.html">select wifi</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/">setup</a>
         </li>
     </ul>
 </nav>
+
 <!--
-Case Light
 -->
 <div id="CaseLightPanel" class="card">
-    <div class="card-header"> Case Light</div>
-    <div class="card-body">
-        <div class="row">
-            <button class="btn btn-lg btn-primary col-sm m-1" style="background-color:grey; color:white" onclick="marlin_setLightIRGB(2,255,0,0)">Night</button>
-            <button class="btn btn-lg btn-warning col-sm m-1" style="background-color:yellow" onclick="marlin_setLightIRGB(255,255,255,255)">On</button>        
-            <div class="w-100"></div>
-            <button class="btn btn-lg btn-dark btn-block m-1" style="background-color:black; color:white" onclick="marlin_setLightIRGB(0,0,0,0)" >Off</button>
-        </div>
-    </div>
+    <div class="card-header">State</div>
+ 
 </div>
 <!--
-    refresh_scanwifi
 -->
 <div id="CaseLightPanel" class="card">
-    <div class="card-header"> AP List</div>
-    <button class="btn btn-primary" onclick="refresh_scanwifi() ">scanwifi</button>
-    <div class="card-body">
-        <div id="AP_list" ></div>
-    </div>
+    <div class="card-header"> commands</div>
+ 
 </div>
-<!--
-    temperaturesPanel
--->
-<div id="temperaturesPanel" class="card">
-        <div class="card-header">
-        Temperatures
-        <button class="btn btn-xs btn-primary" id="temperaturesPanel_refresh_btn" onclick="get_Temperatures()" >Refresh</button> 
-        <label class="btn btn-secondary float-right">
-            <input type="checkbox" onclick="temperatures_setAutoReport(this.checked)"/>
-            <span >Auto-Report</span>
-        </label>
-    </div>    
-    <div class="card-body panel-height-temp">
-        <div class="row">
-            <div class="col-md-auto">
-                <div class="list-group">
-                    <li class="list-group-item">
-                        <span >Heater T0</span>
-                        <span id="heaterT0TargetTemp_anime" class="not_visible loader-pulse float-right" style="color:red"></span>
-                        <div class="form-inline">
-                            <button onclick="temperature_heatOff('T0')" class="btn btn-primary" id=temperature_heatOff_T0>  </button>
-                            <span class="noshowonlowres">&nbsp;&nbsp;</span>                              
-                            <input class="form-control w5" type="number" min="0" max="999" id="heaterT0SelectedTemp" value=0 onkeyup="temperature_handleKeyUp(event, 'T0')" />
-
-                            <span class="noshowonlowres">&nbsp;&nbsp;</span>
-                            <button onclick="temperature_heatSet('T0')" class="btn btn-danger" id=temperature_heatSet_T0>  </button>
-                            <span id="heaterT0DisplayTemp"></span>  
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <span >Bed T0</span>
-                        <span id="bedTargetTemp_anime" class="not_visible loader-pulse float-right" style="color:red"></span>
-                        <div class="form-inline">     
-                            <button onclick="temperature_heatOff('bed')" class="btn btn-primary" id=temperature_heatOff_Bed> </button>
-                            <span class="noshowonlowres">&nbsp;&nbsp;</span>                              
-                            <input class="form-control w5" type="number" min="0" max="999" id="bedSelectedTemp" value=0 onkeyup="temperature_handleKeyUp(event, 'bed')" />
-
-                            <span class="noshowonlowres">&nbsp;&nbsp;</span>
-                            <button onclick="temperature_heatSet('bed')" class="btn btn-danger"  id=temperature_heatSet_Bed></button>
-                            <span id="bedDisplayTemp"></span>   
-                        </div>
-                    </li>
-                </div>
-            </div>
-            <div class="col border border-dark">
-                <canvas id="extruderTempgraph"></canvas>
-                <canvas id="bedTempgraph"></canvas>
-            </div>
-        <row>
-    </div>
-</div>
-<!--
-    controlspanel.html
--->
-<div id="controlPanel" class="card">
-    <div class="card-header">
-        Controls  
-        <button class="btn btn-xs btn-primary" type="button" onclick="get_Position()" >Refresh</button>                   
-    </div> 
-    <div id="control-body" class="card-body">
-        <div class="row" >
-            <form class="form-inline" >
-                Feeds
-                <div class="input-group">  
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">XY:</span>
-                    </div>                              
-                    <input class="form-control" type="number" min="1" max="9999" id="control_xy_velocity" />
-                </div>
-                <div class="input-group">  
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Z:</span>
-                    </div>                              
-                    <input class="form-control" type="number" min="1" max="9999" id="control_z_velocity" />
-                </div>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <div class="input-group-text">Probe</div>
-                    </div>
-                    <input type="number" class="form-control" id="id_ProbeFeed" min="1" max="100" value="20">
-                </div>  
-            </form>             
-            <div class="w-100"></div>
-            <button class="btn btn-danger col-4 m-1" type="button" onclick="marlin_addCommand(cmd_AutoHome)">Home</button>
-            <div class="row col-sm">
-                <button class="btn btn-warning col-sm m-1" type="button" onclick="marlin_addCommand(cmd_AutoHomeXY)">Home XY</button>
-                <div class="row col-sm">
-                    <button class="btn btn-warning btn-block m-1" type="button" onclick="marlin_addCommand(cmd_AutoHomeX)">Home X</button>
-                    <button class="btn btn-warning btn-block m-1" type="button" onclick="marlin_addCommand(cmd_AutoHomeY)">Home Y</button>
-                </div>
-                <div class="w-100"></div>
-                <button class="btn btn-lg btn-warning col-sm m-1" type="button" onclick="marlin_addCommand(cmd_AutoHomeZ)">Home Z</button>
-            </div>
-            <div class="w-100"></div>
-            <button class="btn btn-outline-primary col-sm m-1" id="control_x_position" onclick="marlin_modalMoveAxis('X')"></button>
-            <button class="btn btn-outline-primary col-sm m-1" id="control_y_position" onclick="marlin_modalMoveAxis('Y')"></button>
-            <button class="btn btn-outline-primary col-sm m-1" id="control_z_position" onclick="marlin_modalMoveAxis('Z')"></button>                
-            <div class="w-100"></div>
-            <button class="btn btn-dark col-4 m-1" onclick="marlin_addCommand(cmd_SetPosition000)" >Set (0) </button>
-            <div class="row col-sm">
-                <button class="btn btn-dark col-sm m-1" type="button" onclick="marlin_addCommand(cmd_SetPositionXY0)">Set XY(0)</button>    
-                <div class="row col-sm">
-                    <button class="btn btn-dark btn-block m-1" type="button" onclick="marlin_addCommand(cmd_SetPositionX0)">Set X(0)</button>
-                    <button class="btn btn-dark btn-block m-1" type="button" onclick="marlin_addCommand(cmd_SetPositionY0)">Set Y(0)</button>
-                </div>
-                <div class="w-100"></div>
-                <button class="btn btn-lg btn-dark col-sm m-1" onclick="marlin_addCommand(cmd_SetPositionZ0)">Set Z(0)</button>
-            </div>
-            <div class="w-100"></div>
-            <button class="btn btn-lg btn-secondary btn-block m-1" onclick="marlin_addCommand(cmd_DisableSteppers)" >Motors off</button>
-            <button class="btn btn-warning btn-block m-1" onclick="controls_GotoZero(true)" >Goto (0)</button>
-            <button class="btn btn-warning btn-block m-1" onclick="controls_GotoZero(false)" >Goto XY(0)</button>
-            <span>&nbsp; </span>
-            <div class="w-100"></div>'
-            <form class="form-inline col-sm">
-                <input type="number" class="form-control" id="id_ProbeZhop" min="1" max="10" value="2">
-                <button class="btn btn-info col-sm" type="button" onclick="controls_gotoZHop(document.getElementById('id_ProbeZhop').value)">Z Hop</button>
-            </form>
-            <form class="form-inline col-sm">
-                <input type="number" class="form-control" id="id_ProbeDistance" min="-10" max="0" value="-5">
-                <button class="btn btn-primary col-sm" type="button" onclick="controls_ProbeTarget(document.getElementById('id_ProbeDistance').value)">Probe</button>
-            </form>
-            <label class="btn btn-secondary col-sm text-center">
-                <input type="checkbox" onclick="controls_ProbeTargetMultiple(this.checked)"/>
-                <span>Probe Multiple</span>
-                <span id="id_probeVal"></span>  
-            </label>  
-            <div class="w-100"></div>
-            <span>&nbsp; </span>
-            <div class="w-100"></div>
-            <button class="btn btn-warning btn-block col-sm m-1" onclick="controls_gotoZHop(50)" >Z+50</button>
-            <button class="btn btn-warning btn-block col-sm m-1" onclick="controls_gotoZHop(20)" >Z+20</button>
-            <button class="btn btn-danger btn-block col-sm m-1" onclick="controls_ProbeTarget(-5)" >Z-5</button>
-            <button class="btn btn-danger btn-block col-sm m-1" onclick="controls_ProbeTarget(-20)" >Z-20</button>
-            <button class="btn btn-danger btn-block col-sm m-1" onclick="controls_ProbeTarget(-50)" >Z-50</button>
-        </div>
-    </div>
-</div>
-<!--
-    macros
--->
-<div id="MacroPanel" class="card" hidden>
-    <div class="card-header">Macros</div>
-    <div id="Macro_list" class="macro-container">
-    </div>
-</div>
-<!--
-SD files
--->
-<div id="files" class="card">
-    <div class="card-header"> 
-        <div class="row">
-            <div class="col-md-auto">
-                <button id="SDcontrol_esp" class="btn btn-outline-primary m-1" onclick="setStateSDcontrol(SDcontrolMode_esp)" >Esp</button>
-                <button id="SDcontrol_marlin" class="btn btn-outline-primary m-1" onclick="setStateSDcontrol(SDcontrolMode_marlin)" >Marlin</button>
-                <input type="file" onchange="fsbrowser_impl.UploadFile(this.files)" accept=".gcode">
-                <button class="btn btn-warning m-1" onclick="fsbrowser_impl.mkdir()">MkDir</button>
-            </div>
-            <div class="row col-sm">  
-                <button class="btn btn-primary col-md-auto m-1" onclick="fsbrowser_impl.refresh()">refresh</button>
-                <div id="id_fsbrowser_navbar" class="row col-sm m-1"></div>
-            </div>
-        </div>
-    </div>   
-    <div class="card-body"> 
-        <div id="id_fsbrowser_placeholder"></div>
-    </div>
-</div>
-<!--
-Engraver
--->
-<div id="probePanel" class="card">
-    <div class="card-header">
-        <b>Engraver</b>        
-    </div>
-    <div class="card-body"> 
-        <div class="row">
-            <input type="text"  class="form-control col-sm m-1" id="id_fileSelected" placeholder="selected gcode file" readonly>
-            <button class="btn btn-outline-secondary col-sm m-1" type="button" id="id_getSizeFromFile" onclick="engraver_getGcodeInfo(document.getElementById('id_fileSelected').value,engraver_applyProbeAreaSize)">get Size From File</button>
-            <button class="btn btn-danger col-sm m-1" type="button" id="id_levelMod" onclick="engraver_GCodeLevelMod(document.getElementById('id_fileSelected').value)" >levelMod</button>
-            <div class="w-100"></div>
-             <form class="form-inline m-1">
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <div class="input-group-text">levelDelta</div>
-                    </div>
-                    <input type="number" class="form-control" id="id_levelDelta" step="0.1">
-                </div>
-                <div class="input-group">                    
-                    <div class="input-group-prepend">
-                        <div class="input-group-text">FeedXY</div>
-                    </div>
-                    <input type="number" class="form-control" id="id_feedRateProbeXY" min=10>
-                </div>
-            </form>
-            <form class="form-inline m-1">
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <div class="input-group-text">Grid</div>
-                    </div>
-                    <input type="number" class="form-control" id="id_ProbeAreaGrid" min="1" max="20">
-                </div>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Size</span>
-                    </div>
-                    <input type="number" placeholder="X" id="id_ProbeAreaSizeX" min="1">
-                    <span class="input-group-text" >x</span>
-                    <input type="number" placeholder="Y" id="id_ProbeAreaSizeY" min="1">
-
-                </div>
-            </form>
-            <div class="w-100"></div>
-            <button class="btn btn-warning col-sm m-1" type="button" onclick="engraver_probeArea()" >Probe Area</button>
-            <button class="btn btn-info col-sm m-1" type="button" onclick="engraver_probeGetResult()" >Get Result</button>
-            <div class="w-100"></div>
-            <button class="btn btn-warning btn-block m-1" type="button" onclick="engraver_probeStop()" >Clear/Stop</button>
-            <input type="number" class="col-md-auto m-1" id="id_ToolChangeZ" min="1" max="200">
-            <button class="btn btn-info col-sm m-1" type="button" onclick="controls_gotoToPos(0,0,$('#id_ToolChangeZ').val())">ToolChange</button>
-            <button class="btn btn-warning col-sm m-1" type="button" onclick="controls_ProbeTarget($('#id_ToolChangeZ').val()*-1)">Probe</button>
-            <button class="btn btn-dark col-sm m-1" type="button" onclick="marlin_addCommand(cmd_SetPosition000)">Set (0)</button>
-            <div class="w-100"></div>
-            <button class="btn btn-info col-sm m-1" type="button" onclick="marlin_modalMoveAxisStep('X',-$('#id_ProbeAreaSizeX').val())">Goto -sizeX</button>
-            <button class="btn btn-info col-sm m-1" type="button" onclick="marlin_modalMoveAxisStep('X',-$('#id_ProbeAreaSizeY').val())">Goto -sizeY</button>
-            <div class="w-100"></div>
-            <button class="btn btn-warning btn-block m-1" onclick="controls_GotoZero(false)" >Goto XY(0)</button>
-        </div>
-    </div>
-</div>
-<!--
-Print status
--->
-<div class="card">
-    <div class="card-header">
-        <button class="btn btn-xs btn-info" type="button" onclick="marlin_addCommand(cmd_ReportSDPrintStatus)" >Print status</button>
-        <label class="btn btn-secondary float-right">
-            <input type="checkbox" onclick="SDPrintStatus_setAutoReport(this.checked)"/>
-            <span >Auto-Report</span>
-        </label>
-        <div class="progress border"  style="height: 20px;">
-            <div class="progress-bar" id="id_printProgress" role="progressbar" style="width: 1%;"></div>
-        </div>
-        <span id="id_printProgressVal">unknown</span>
-    </div>
-</div>
-<!-- 
-
-
--->
-<div id="commandsPanel" class="card">
-    <div class="card-header">
-        Commands
-        <button id="clear_monitor_btn " class="btn btn-primary btn-xs float-right" onclick="Monitor_output_Clear()" >Clear</button>
-        <label class="btn btn-secondary float-right">
-            <input type="checkbox" id="id_GroupSimilar" checked/>
-            <span >Group</span>
-        </label>
-    </div>
-    <div class="card-body" id="command-body">
-        <pre id="cmd_content" style="min-height: 350px; max-height: 350px;"> </pre>
-    </div>
-    <div class="card-footer">
-        <ul class="list-group list-group-horizontal">
-            <li  class="list-group-item flex-fill">
-                <div class="input-group "> 
-                    <div class="input-group-prepend">
-                    </div>
-                    <input  autocomplete="off" type="text" class="form-control" placeholder="Send Command..." id="custom_cmd_txt" onkeyup="CustomCommand_OnKeyUp(event)" value=""/>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" onclick="SendCustomCommand();" >Send</button>
-                    </div>
-                </div>
-            </li>
-            <li  class="list-group-item">
-            <label class="btn btn-secondary">
-                <input type="checkbox" id="monitor_upCase" checked />
-                <span >upCase</span>
-            </label>
-            <label class="btn btn-secondary">
-                <input type="checkbox" onclick=" Monitor_check_autoscroll()" id="monitor_enable_autoscroll" checked/>
-                <span >Autoscroll</span>
-            </label>
-            </li>
-        </ul>
-    </div>
-</div> 
- <!-- Modal -->
-<div class="modal fade" id="id_ModalMoveAxis" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Move Axis
-                    <span id="id_ModalMoveAxisName">not set</span>
-                </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form class="form-inline">
-                        <input type="range" class="form-control-range col-11" id="modal_rangePos" onchange="marlin_modalMoveAxisPos(document.getElementById('id_ModalMoveAxisName').innerHTML,this.value);document.getElementById('id_modal_rangePosValue').innerHTML=this.value">
-                        <label id="id_modal_rangePosValue" >val</label>
-                </form>
-                <div class="btn-toolbar" role="toolbar">
-                    <div class="btn-group col-sm mr-1" role="group" >
-                        <button type="button" class="btn btn-primary" onclick="marlin_modalMoveAxisStep(document.getElementById('id_ModalMoveAxisName').innerHTML,this.innerHTML)">-10</button>
-                        <button type="button" class="btn btn-primary" onclick="marlin_modalMoveAxisStep(document.getElementById('id_ModalMoveAxisName').innerHTML,this.innerHTML)">-5</button>
-                        <button type="button" class="btn btn-primary" onclick="marlin_modalMoveAxisStep(document.getElementById('id_ModalMoveAxisName').innerHTML,this.innerHTML)">-1</button>
-                        <button type="button" class="btn btn-primary" onclick="marlin_modalMoveAxisStep(document.getElementById('id_ModalMoveAxisName').innerHTML,this.innerHTML)">-0.1</button>
-                    </div>
-                    <div class="btn-group col-sm mr-1" role="group">
-                        <button type="button" class="btn btn-danger" onclick="marlin_modalMoveAxisStep(document.getElementById('id_ModalMoveAxisName').innerHTML,this.innerHTML)">+0.1</button>
-                        <button type="button" class="btn btn-danger" onclick="marlin_modalMoveAxisStep(document.getElementById('id_ModalMoveAxisName').innerHTML,this.innerHTML)">+1</button>
-                        <button type="button" class="btn btn-danger" onclick="marlin_modalMoveAxisStep(document.getElementById('id_ModalMoveAxisName').innerHTML,this.innerHTML)">+5</button>
-                        <button type="button" class="btn btn-danger" onclick="marlin_modalMoveAxisStep(document.getElementById('id_ModalMoveAxisName').innerHTML,this.innerHTML)">+10</button>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-                <!-- modal -->
 <!-- -->
 </body>
 </html>

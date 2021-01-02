@@ -4,7 +4,7 @@
  *  Created on: Dec 6, 2017
  *      Author: ominenko
  */
-
+#if 0
 #include "CDimableLed.h"
 #include "./libs/TimeLib.h"
 
@@ -139,5 +139,5 @@ void CDimableLed::loop() {
   switchControl_handler.loop();
 }
 
-
+#endif
 

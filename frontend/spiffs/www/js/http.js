@@ -1,3 +1,6 @@
+function Monitor_comment(str){
+}
+
 function SendGetHttp(url, resultfn, errorfn) {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
@@ -11,7 +14,7 @@ function SendGetHttp(url, resultfn, errorfn) {
         }
     }    
 //    console.log("GET:" + url);
-    Monitor_comment("GET:" + url);
+
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
 }

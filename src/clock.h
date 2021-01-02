@@ -22,12 +22,11 @@
 
 #include <Arduino.h>
 #include <SPI.h>
-#include "./libs/Max72xxPanel.h" // https://github.com/markruys/arduino-Max72xxPanel.git
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
-#include "LittleFS.h"
+#include <LittleFS.h>
 
 #include <Wire.h> // must be included here so that Arduino library object file references work
 #include <pgmspace.h>
@@ -36,6 +35,7 @@
 #include <sstream>
 
 #include "./libs/NTPtime.h"
+#include "./libs/Max72xxPanel.h" // https://github.com/markruys/arduino-Max72xxPanel.git
 #include "FreeMono9pt7b.h"
 
 #include "DHTesp.h"
@@ -49,6 +49,16 @@
 #include "./libs/TimeLib.h"
 #include "./libs/Timezone.h"
 #include "./libs/logs.h"
+
+const uint16_t kRecvPin = D3;
+const uint16_t kCaptureBufferSize = 512;
+const uint8_t kTimeout = 50;  // Milli-Seconds
+
+#include <IRrecv.h>
+#include <IRremoteESP8266.h>
+#include <IRutils.h>
+#include <IRtext.h>
+
 
 #include "secret.h_ex"
 

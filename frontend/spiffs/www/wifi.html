@@ -1,0 +1,37 @@
+<html>
+<head>
+    <title>select wifi</title>
+
+    <script>
+
+    </script>
+    <script src="js/jquery-3.4.1.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/scanwifi.js"></script>
+    <script src="js/http.js"></script>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body onload="onLoad()">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary rounded">
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link" href="javascript:history.back()">Back</a>
+        </li>
+    </ul>
+</nav>
+
+<!--
+    refresh_scanwifi
+-->
+<div id="wifi" class="card">
+    <div class="card-header"> AP List</div>
+    <button class="btn btn-primary" onclick="refresh_scanwifi() ">scanwifi</button>
+    <div class="card-body">
+        <div id="AP_list" ></div>
+    </div>
+</div>
+<!-- -->
+</body>
+</html>

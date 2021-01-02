@@ -40,6 +40,8 @@ ESP8266WebServer serverWeb(SERVER_PORT_WEB);
 CMQTT mqtt;
 ESP8266HTTPUpdateServer otaUpdater;
 
+IRrecv irrecv(kRecvPin, kCaptureBufferSize, kTimeout, false);
+
 
 void setup_matrix() {
   matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
@@ -83,13 +85,6 @@ void http_about()
 #ifdef DEBUG_STREAM
     serverWeb.sendContent( "\nDEBUG_STREAM on");
 #endif
-//    serverWeb.sendContent(sAbout.str().c_str());
-//    about = "\n";
-//    serverWeb.sendContent(about);
-//    about = "\n";
-//    serverWeb.sendContent(about);
-//    about = "\n";
-
     //---------------
     serverWeb.sendContent("");
 }
@@ -142,11 +137,13 @@ void  setup_WIFIConnect(){
 
 void setup() {
 	pinMode(LED_BUILTIN, OUTPUT);
+	//pinMode(DHTPin, INPUT); setted in driver
 
 	Serial.begin(SERIAL_BAUND);
 	DBG_PRINTLN(DEVICE_NAME);
 	DBG_PRINTLN("Compiled " __DATE__ " " __TIME__);
-	//pinMode(DHTPin, INPUT); setted in driver
+
+	irrecv.enableIRIn();  // Start up the IR receiver.
 	LittleFS.begin();
 	MDNS.begin(DEVICE_NAME);
 	otaUpdater.setup(&serverWeb, update_path, ota_username, ota_password);
@@ -286,4 +283,13 @@ void loop() {
   dimableLed.loop();
 #endif
   serverWeb.handleClient();
+  decode_results results;
+
+  if (irrecv.decode(&results)) {  // We have captured something.
+	 cout << std::hex << results.value <<"  " <<resultToHumanReadableBasic(&results)<<endl;
+     irrecv.resume();
+     // Deallocate the memory allocated by resultToRawArray().
+
+
+   }
 }
