@@ -1,3 +1,6 @@
+# platformio
+source ~/.platformio/penv/bin/activate
+pio project init --ide eclipse
 # clock
 clock with ntp synk
 # Board

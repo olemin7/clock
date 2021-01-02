@@ -87,59 +87,60 @@ String getMimeType(String path)
 void hw_info(std::ostream &out)
 {
 	out << "hw_info ->" << endl;
-//    Out.printf("CpuFreqMHz %u \n", ESP.getCpuFreqMHz());
-//    Out.printf("getFreeHeap %u \n", ESP.getFreeHeap());
-//    auto realSize = ESP.getFlashChipRealSize();
-//    auto ideSize = ESP.getFlashChipSize();
-//    auto ideMode = ESP.getFlashChipMode();
-//    Out.println("Flash info");
-//    Out.printf("id:   %08X\n", ESP.getFlashChipId());
-//    Out.printf("size: %u\n", realSize);
-//    if (ideSize != realSize)
-//    {
-//        Out.printf("\n!!Different size\nFlash IDE size: %u\n\n", ideSize);
-//    }
-//    Out.printf("ide speed: %u\n", ESP.getFlashChipSpeed());
-//    Out.print("ide mode: ");
-//    switch (ideMode)
-//    {
-//        case FM_QIO:
-//            Out.println("QIO");
-//            break;
-//        case FM_QOUT:
-//            Out.println("QOUT");
-//            break;
-//        case FM_DIO:
-//            Out.println("DIO");
-//            break;
-//        case FM_DOUT:
-//            Out.println("DOUT");
-//            break;
-//        default:
-//            Out.print(ideMode);
-//            Out.println("UNKNOWN");
-//    }
+	out << "CpuFreqMHz "<< ESP.getCpuFreqMHz() << endl;
+	out << "getFreeHeap "<< ESP.getFreeHeap() << endl;
+    const auto realSize = ESP.getFlashChipRealSize();
+    const auto ideSize = ESP.getFlashChipSize();
+    const auto ideMode = ESP.getFlashChipMode();
+    out << "Flash info" << endl;
+    out << "id:"<< ESP.getFlashChipId() << endl;
+    out << "size:"<< realSize << endl;
+    if (ideSize != realSize)
+    {
+    	out << "!!Different size\nFlash IDE size:"<< ideSize<<endl;
+    }
+    out << "ide speed:"<< ESP.getFlashChipSpeed()<<endl;
+    out << "ide mode: ";
+    switch (ideMode)
+    {
+        case FM_QIO:
+            out << "QIO" <<endl;
+            break;
+        case FM_QOUT:
+            out << "QOUT" <<endl;
+            break;
+        case FM_DIO:
+            out << "DIO" <<endl;
+            break;
+        case FM_DOUT:
+            out << "DOUT" <<endl;
+            break;
+        default:
+            out << ideMode;
+            out << " UNKNOWN" <<endl;
+    }
     out<<"<- Flash info";
 }
 
-void SPIFFS_info(std::ostream &out)
+void LittleFS_info(std::ostream &out)
 {
-    out << "SPIFFS_info" << endl;
-//    FSInfo info;
-//    SPIFFS.info(info);
+    out << "LittleFS_info" << endl;
+    FSInfo info;
+    LittleFS.info(info);
+
+    out << "Total:" << info.totalBytes << endl;
+    out << "Used:" << info.usedBytes << endl;
+    out << "nBlock:" << info.blockSize << " Page:" << info.pageSize << endl;
+    out << "nMax open files:" << info.maxOpenFiles << endl;
+    out << "maxPathLength:" << info.maxPathLength << endl;
 //
-//    cout << "Total:" << info.totalBytes << endl;
-//    cout << "Used:" << info.usedBytes << endl;
-//    cout << "nBlock:" << info.blockSize << " Page:" << info.pageSize << endl;
-//    cout << "nMax open files:" << info.maxOpenFiles << endl;
-//    cout << "maxPathLength:" << info.maxPathLength << endl;
-//
-//    cout << "SPIFFS files:" << endl;
-//    auto dir = SPIFFS.openDir("/");
-//    while (dir.next())
-//    {
-//        cout << dir.fileName() << " SZ:" << dir.fileSize() << endl;
-//    }
+    out << " files:" << endl;
+    auto dir = LittleFS.openDir("/");
+    while (dir.next())
+    {
+        out << dir.fileName() << " SZ:" << dir.fileSize() << endl;
+    }
+    out << "<--LittleFS_info" << endl;
 }
 
 void webRetResult(ESP8266WebServer &server, te_ret res)

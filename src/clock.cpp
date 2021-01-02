@@ -160,6 +160,7 @@ void setup() {
 
 
     hw_info(cout);
+    LittleFS_info(cout);
     setup_matrix();
   
     mqtt.setup(mqtt_server, mqtt_port);

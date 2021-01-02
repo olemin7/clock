@@ -20,7 +20,7 @@ void blink();
 
 String getMimeType(String path);
 void hw_info(std::ostream &out);
-void SPIFFS_info(std::ostream &out);
+void LittleFS_info(std::ostream &out);
 
 typedef enum {
     er_ok = 0,

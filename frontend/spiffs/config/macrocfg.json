@@ -1,0 +1,6 @@
+{"items":[
+ {"name":"preheat PLA"     ,"cmd":"M140 S75 \\nM104 S210\\nM105\\nM155 S15"}
+,{"name":"preheat PLA+"    ,"cmd":"M140 S85 \\nM104 S220\\nM105\\nM155 S15"}
+,{"name":"preheat ABS+"    ,"cmd":"M140 S100\\nM104 S220\\nM105\\nM155 S15"}
+,{"name":"preheat ABS flex","cmd":"M140 S100\\nM104 S250\\nM105\\nM155 S15"}
+]}
