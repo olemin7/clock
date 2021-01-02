@@ -134,11 +134,12 @@ void LittleFS_info(std::ostream &out)
     out << "nMax open files:" << info.maxOpenFiles << endl;
     out << "maxPathLength:" << info.maxPathLength << endl;
 //
-    out << " files:" << endl;
+    out << "files:" << endl;
     auto dir = LittleFS.openDir("/");
+    auto index=0;
     while (dir.next())
     {
-        out << dir.fileName() << " SZ:" << dir.fileSize() << endl;
+        out << index++ << "." << dir.fileName() << " SZ:" << dir.fileSize() << endl;
     }
     out << "<--LittleFS_info" << endl;
 }

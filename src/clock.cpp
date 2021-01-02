@@ -85,10 +85,8 @@ void http_about()
 #endif
 //    serverWeb.sendContent(sAbout.str().c_str());
 //    about = "\n";
-//    hw_info(stream_about);
 //    serverWeb.sendContent(about);
 //    about = "\n";
-//    SPIFFS_info(stream_about);
 //    serverWeb.sendContent(about);
 //    about = "\n";
 
@@ -111,7 +109,7 @@ void  setup_WebPages(){
 
 	serverWeb.serveStatic("/", LittleFS, "/www/index.html");
 	serverWeb.serveStatic("/css", LittleFS, "/www/css");
-	serverWeb.serveStatic("/js", LittleFS, "/www/cjs");
+	serverWeb.serveStatic("/js", LittleFS, "/www/js");
 	serverWeb.onNotFound([] {
 		Serial.println("Error no handler");
 		Serial.println(serverWeb.uri());
