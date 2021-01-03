@@ -10,6 +10,16 @@
 #include "misk.h"
 #include <sstream>
 using namespace std;
+
+ostream& operator<<(ostream& os, const IPAddress& ip){
+	os << ip.toString().c_str();
+	return os;
+}
+
+wl_status_t CWifiStateSignal::getValue() const{
+	return WiFi.status();
+}
+
 void wifiHandle_sendlist(ESP8266WebServer &server){
     DBG_PRINTLN("wifiHandle_sendlist ");
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
@@ -46,8 +56,6 @@ void wifiHandle_loop(){
     if (WIFI_STA == WiFi.getMode()) {
         if (WiFi.status() == WL_CONNECTED) {
             showed = true;
-            Serial.print("M117 ");
-            Serial.println(WiFi.localIP());
             DBG_PRINT(F( "IP address:"));
             DBG_PRINT(WiFi.localIP().toString());
             DBG_PRINT(F(" RSSI: "));
@@ -114,3 +122,28 @@ void setup_wifi(const String &ssid, const String &pwd, const String &host_name, 
     }
 }
 
+/*******************************************************************************
+ *
+ */
+void wifiList(std::ostream &out){
+	out << "Wifi scaning...";
+	 // WiFi.scanNetworks will return the number of networks found
+	int n = WiFi.scanNetworks();
+	out << std::endl;
+	for (int i = 0; i < n; ++i)
+		out << "-" << WiFi.SSID(i) << "(" << WiFi.RSSI(i) << ")" << ((WiFi.encryptionType(i) == ENC_TYPE_NONE)?" ":"*") << std::endl;
+	out << "Scan is done. Networks " << n << std::endl;
+}
+
+void wifi_status(std::ostream &out){
+	out<< "WiFi: mode=" << WiFi.getMode();
+	if (WIFI_STA == WiFi.getMode()){
+		out<< "(STA), SSID=" << WiFi.SSID() << ", status=" << WiFi.status();
+		if(WL_CONNECTED==WiFi.status()){
+			out<<", ip="<<WiFi.localIP();
+		}
+	}else{
+		out << "(AP), host= " << WiFi.hostname() << ", ip=" << WiFi.softAPIP().toString();
+	}
+	out<<endl;
+}

@@ -86,6 +86,7 @@ String getMimeType(String path)
 
 void hw_info(std::ostream &out)
 {
+	out << "Compiled "<<__DATE__<< " "<< __TIME__;
 	out << "hw_info ->" << endl;
 	out << "CpuFreqMHz "<< ESP.getCpuFreqMHz() << endl;
 	out << "getFreeHeap "<< ESP.getFreeHeap() << endl;

@@ -41,7 +41,7 @@ CMQTT mqtt;
 ESP8266HTTPUpdateServer otaUpdater;
 
 IRrecv irrecv(kRecvPin, kCaptureBufferSize, kTimeout, false);
-
+CWifiStateSignal wifiStateSignal;
 
 void setup_matrix() {
   matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
@@ -103,6 +103,7 @@ void  setup_WebPages(){
             });
 
 	serverWeb.serveStatic("/", LittleFS, "/www/index.html");
+	serverWeb.serveStatic("/", LittleFS, "/www/wifi.html");
 	serverWeb.serveStatic("/css", LittleFS, "/www/css");
 	serverWeb.serveStatic("/js", LittleFS, "/www/js");
 	serverWeb.onNotFound([] {
@@ -113,25 +114,27 @@ void  setup_WebPages(){
 
 void  setup_WIFIConnect(){
 	WiFi.begin();
+	wifiStateSignal.onSignal([](const wl_status_t &status){
+			wifi_status(cout);
+		}
+	);
+	wifiStateSignal.begin();
     if (WIFI_STA == WiFi.getMode())
     {
     	const auto now = millis()+WIFI_CONNECT_TIMEOUT;
-		cout << "connecting <"<<WiFi.SSID()<<"> ";
+		cout << "connecting <" << WiFi.SSID() << "> " << endl;
 		while(now > millis()){
 			if (WL_CONNECTED == WiFi.status()) {
-				cout <<"IP:"<< WiFi.localIP().toString() << endl;
 				return;
 			}
 			blink();
 		}
 		//Temporary server
 		//todo add key to swith
-		cout <<"fail"<< std::endl;
+		cout <<"fail"<< endl;
 		WiFi.persistent(false);
 		WiFi.softAP(DEVICE_NAME, DEF_AP_PWD);
 		cout << "AP " << DEVICE_NAME << ",pwd: " << DEF_AP_PWD << ",ip:"<< WiFi.softAPIP().toString()<<std::endl;
-    }else{
-    	cout << "AP " << WiFi.hostname() << " " << WiFi.softAPIP().toString();
     }
 }
 
@@ -141,20 +144,19 @@ void setup() {
 
 	Serial.begin(SERIAL_BAUND);
 	DBG_PRINTLN(DEVICE_NAME);
-	DBG_PRINTLN("Compiled " __DATE__ " " __TIME__);
+    hw_info(cout);
 
 	irrecv.enableIRIn();  // Start up the IR receiver.
 	LittleFS.begin();
+	MDNS.addService("http", "tcp", SERVER_PORT_WEB);
 	MDNS.begin(DEVICE_NAME);
 	otaUpdater.setup(&serverWeb, update_path, ota_username, ota_password);
 	setup_WebPages();
-	MDNS.addService("http", "tcp", SERVER_PORT_WEB);
 #ifdef _USE_DIMABLE_LED_
   dimableLed.setup();
 #endif
 
 
-    hw_info(cout);
     LittleFS_info(cout);
     setup_matrix();
   
@@ -169,8 +171,6 @@ void setup() {
 
 	mqtt.setClientID(DEVICE_NAME);
 	serverWeb.begin();
-
-	sw_info(DEVICE_NAME, Serial);
 
 	matrix.fillScreen(LOW);
 	matrix.setCursor(0, 7);
@@ -274,7 +274,7 @@ void intensity_loop() {
 }
 
 void loop() {
-  wifi_loop();
+  wifiStateSignal.loop();
   mqtt_loop();
   ntpTime.loop();
   time_loop();	
@@ -286,7 +286,8 @@ void loop() {
   decode_results results;
 
   if (irrecv.decode(&results)) {  // We have captured something.
-	 cout << std::hex << results.value <<"  " <<resultToHumanReadableBasic(&results)<<endl;
+	  if(!results.repeat)
+		  cout << std::hex << results.value <<endl;
      irrecv.resume();
      // Deallocate the memory allocated by resultToRawArray().
 

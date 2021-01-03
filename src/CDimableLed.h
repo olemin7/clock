@@ -8,7 +8,6 @@
 #ifndef CDIMABLELED_H_
 #define CDIMABLELED_H_
 #include <Arduino.h>
-#include "./libs/IRremoteESP8266_nec.h"
 typedef enum {
 	CMD_LED_OFF=0,
 	CMD_LED_NIGHT,

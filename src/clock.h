@@ -40,7 +40,6 @@
 
 #include "DHTesp.h"
 
-#include "./libs/unsorted.h"
 #include "./libs/CLightDetectResistor.h"
 
 #include "./libs/CMQTT.h"
@@ -50,15 +49,14 @@
 #include "./libs/Timezone.h"
 #include "./libs/logs.h"
 
-const uint16_t kRecvPin = D3;
-const uint16_t kCaptureBufferSize = 512;
-const uint8_t kTimeout = 50;  // Milli-Seconds
-
 #include <IRrecv.h>
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
 #include <IRtext.h>
 
+constexpr uint16_t kRecvPin = D3;
+constexpr uint16_t kCaptureBufferSize = 1024;
+constexpr uint8_t kTimeout = 15;  // Milli-Seconds
 
 #include "secret.h_ex"
 
