@@ -16,7 +16,7 @@
 ostream& operator<<(ostream& os, const IPAddress& ip);
 
 class CWifiStateSignal:public SignalChange<wl_status_t>{
-	wl_status_t getValue() const override;
+	wl_status_t getValue() override;
 
 };
 

@@ -49,21 +49,9 @@
 #include "./libs/Timezone.h"
 #include "./libs/logs.h"
 
-#include <IRrecv.h>
-#include <IRremoteESP8266.h>
-#include <IRutils.h>
-#include <IRtext.h>
-
-constexpr uint16_t kRecvPin = D3;
-constexpr uint16_t kCaptureBufferSize = 1024;
-constexpr uint8_t kTimeout = 15;  // Milli-Seconds
-
 #include "secret.h_ex"
 
-
-#ifdef _USE_DIMABLE_LED_
 #include "CDimableLed.h"
-#endif
 
 #define MQTT_TEMPERATURE (1+(ROOM-1)*2)
 #define MQTT_HUMIDITY (MQTT_TEMPERATURE+1)

@@ -32,17 +32,25 @@ class Signal{
 };
 
 template <class T>
-class SignalChange:public Signal<T>{
+class SignalLoop:public Signal<T>{
+public:
+   virtual void begin() =0;
+   virtual void loop()=0;
+   virtual ~SignalLoop(){}
+};
+
+template <class T>
+class SignalChange:public SignalLoop<T>{
     private:
 		T value;
     private:
-       virtual T getValue() const =0;
+       virtual T getValue() =0;
 
     public:
-       void begin(){
+       void begin() override{
     	   this->notify(getValue());
        }
-       void loop(){
+       void loop() override{
     	   const T tmp= getValue();
     	   if (tmp != value){
     		   value=tmp;

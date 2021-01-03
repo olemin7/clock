@@ -16,7 +16,7 @@ ostream& operator<<(ostream& os, const IPAddress& ip){
 	return os;
 }
 
-wl_status_t CWifiStateSignal::getValue() const{
+wl_status_t CWifiStateSignal::getValue(){
 	return WiFi.status();
 }
 

@@ -29,18 +29,34 @@ void setTime_(const time_t &par) {
 auto matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
 NTPtime ntpTime;
-#ifdef _USE_DIMABLE_LED_
-CDimableLed dimableLed;
-#endif
-CLightDetectResistor ldr;
-static uint8_t preLevel = 0;
+
+class CLDRSignal:public SignalChange<uint8_t>{
+	CLightDetectResistor ldr;
+	uint8_t getValue(){
+		static const auto itransforms = std::array<int16_t, 4> { 250, 500, 750, 1000 };
+		const auto val = ldr.get();
+		uint8_t level = 0;
+		for (const auto it : itransforms) {
+			if (val < it) {
+				break;
+			}
+			level++;
+		}
+		return level;
+	}
+public:
+	int16_t get(){
+		return ldr.get();
+	}
+} LDRSignal;
+
+
 DHTesp dht;
 
 ESP8266WebServer serverWeb(SERVER_PORT_WEB);
 CMQTT mqtt;
 ESP8266HTTPUpdateServer otaUpdater;
 
-IRrecv irrecv(kRecvPin, kCaptureBufferSize, kTimeout, false);
 CWifiStateSignal wifiStateSignal;
 
 void setup_matrix() {
@@ -79,7 +95,7 @@ void http_about()
     sAbout << "timeStatus= " << timeStatus();
     sAbout << "time: " << hour(local)<< ":"<< minute(local)<<std::endl;
     sAbout <<"Temperature= " << dht.getTemperature() << ", Humidity=" << dht.getHumidity() << std::endl;
-    sAbout << "LDR=" << ldr.get() << std::endl;
+    sAbout << "LDR=" << LDRSignal.get() << std::endl;
 
     serverWeb.sendContent(sAbout.str().c_str());
 #ifdef DEBUG_STREAM
@@ -145,17 +161,18 @@ void setup() {
 	Serial.begin(SERIAL_BAUND);
 	DBG_PRINTLN(DEVICE_NAME);
     hw_info(cout);
-
-	irrecv.enableIRIn();  // Start up the IR receiver.
 	LittleFS.begin();
 	MDNS.addService("http", "tcp", SERVER_PORT_WEB);
 	MDNS.begin(DEVICE_NAME);
 	otaUpdater.setup(&serverWeb, update_path, ota_username, ota_password);
 	setup_WebPages();
-#ifdef _USE_DIMABLE_LED_
-  dimableLed.setup();
-#endif
-
+    dimableLed.setup();
+    LDRSignal.onSignal([](const uint8_t &level){
+  	    matrix.setIntensity(level);
+  	    cout << "matrix.setIntensity=" << level << endl;
+		}
+	);
+    LDRSignal.begin();
 
     LittleFS_info(cout);
     setup_matrix();
@@ -247,50 +264,14 @@ void time_loop() {
   matrix.write();
 }
 
-const auto itransforms = std::array<int16_t, 4> { 250, 500, 750, 1000 };
-void intensity_loop() {
-  const auto now = millis();
-  static long next = 0;
-  if (now < next) {
-    return;
-  }
-  next = now + 1000;
-  const auto val = ldr.get();
-  uint8_t level = 0;
-  for (const auto it : itransforms) {
-    if (val < it) {
-      break;
-    }
-    level++;
-  }
-  if (preLevel != level) {
-    preLevel = level;
-    matrix.setIntensity(level);
-    Serial.print("matrix.setIntensity=");
-    Serial.print(level);
-    Serial.print(",");
-    Serial.println(val);
-  }
-}
+
 
 void loop() {
   wifiStateSignal.loop();
   mqtt_loop();
   ntpTime.loop();
   time_loop();	
-  intensity_loop();
-#ifdef _USE_DIMABLE_LED_
   dimableLed.loop();
-#endif
+  LDRSignal.loop();
   serverWeb.handleClient();
-  decode_results results;
-
-  if (irrecv.decode(&results)) {  // We have captured something.
-	  if(!results.repeat)
-		  cout << std::hex << results.value <<endl;
-     irrecv.resume();
-     // Deallocate the memory allocated by resultToRawArray().
-
-
-   }
 }
