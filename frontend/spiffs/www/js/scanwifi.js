@@ -28,7 +28,7 @@ function process_scanWifi_answer(response_text) {
 
             for (var i = aplist.length - 1; i >= 0; i--) {
                 const isProtected=(aplist[i].IS_PROTECTED=="1");
-                content +='<button type="button" class="btn btn-outline-primary btn-block text-left"';
+                content +='<button type="button" class="btn btn-outline-primary btn-block text-start"';
                 content += "onclick='select_ap_ssid(\"" + aplist[i].SSID +"\","+isProtected + ");'>";
                 if (isProtected) content += get_icon_svg("lock");
                 content+=aplist[i].SSID;
