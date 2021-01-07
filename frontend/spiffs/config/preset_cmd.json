@@ -1,0 +1,6 @@
+{"items":[
+ {"name":"off"    ,"handler":"set"	,"val":0}
+,{"name":"night"  ,"handler":"set"	,"val":2}
+,{"name":"on"     ,"handler":"set"  ,"val":1023}
+,{"name":"toggle" ,"handler":"toggle","val":0}
+]}
