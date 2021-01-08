@@ -1,4 +1,5 @@
 function Monitor_comment(str){
+    //console.log("answer:" + str);
 }
 
 function SendGetHttp(url, resultfn, errorfn) {

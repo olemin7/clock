@@ -4,24 +4,15 @@
 
     <script>
 
-function onIndexLoad(status){
-    preset_cmd_on_load();
-}
-
-function on_statusUpdate(status){
-    if(Object.keys(status).length){ //is any date
-        console.log("on_statusUpdate:" , status);
-        controls_UpdateStatus(status);
-        temperatures_UpdateStatus(status);
-        fsbrowser_UpdateStatus(status);
+    function onIndexLoad(status){
+        preset_cmd_on_load();
+        $('#id_add_cmd').html(get_icon_svg("plus-sign", "1.3em", "1.2em"));
     }
-}
 
     </script>
     <script src="js/jquery-3.5.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/icons.js"></script>
-    <script src="js/smoothie.js"></script>
     <script src="js/preset_cmd.js"></script>
     <script src="js/http.js"></script>
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -40,7 +31,7 @@ function on_statusUpdate(status){
             <a class="nav-link" href="/wifi.html">select wifi</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="/">setup</a>
+            <a class="nav-link" href="/config_rc.html">config RC</a>
         </li>
     </ul>
 </nav>
@@ -56,9 +47,9 @@ function on_statusUpdate(status){
 <div id="CaseLightPanel" class="Card">
     <div class="card-header"> commands
         <div class="float-end">
-            <button type="button"  id="id_save" style="display: none;" onclick="preset_cmd_save()">Save</button>
-            <button type="button"  id="id_cancel" style="display: none;" onclick="preset_cmd_cancel()">Cancel</button>
-            <button type="button"  id="id_edit" onclick="preset_cmd_edit_begin()">Edit</button>
+            <button type="button" id='id_add_cmd'  class="btn btn-outline-primary" onclick='preset_cmd_edit(-1)'></button>
+            <button type="button" id="id_save" class="btn btn-outline-primary" onclick="preset_cmd_save()">Save</button>
+            <button type="button" id="id_cancel" class="btn btn-outline-primary" onclick="preset_cmd_cancel()">Cancel</button>
         </div>
     </div>
         <div class="card-body">
@@ -94,7 +85,7 @@ function on_statusUpdate(status){
             </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-warning" onclick="preset_cmd_send(preset_cmd_dialog_get())">Test</button>
-        <button type="button" class="btn btn-secondary" onclick="$('#id_edit_item_dialog').modal('hide');">Close</button>
+        <button type="button" class="btn btn-secondary" onclick="$('#id_edit_item_dialog').modal('hide');">Cancel</button>
         <button type="button" class="btn btn-primary" onclick="preset_cmd_dialog_save()">Save changes</button>
       </div>
     </div>
