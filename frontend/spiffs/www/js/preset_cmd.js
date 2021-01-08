@@ -168,20 +168,4 @@ function process_preset_cmd_answer(response_text) {
     return result;
 }
 
-function select_ap_ssid(ssid_name, isProtected) {
-    var url = "/connectwifi?ssid="+ssid_name;
-    if(isProtected){
-        var passwd = prompt("connect to "+ssid_name, "your password here");
-        if(passwd==null){
-            return;
-        }
-        url +="&pwd="+encodeURIComponent(passwd);
-    }else{
-        var r = confirm("connect to "+ssid_name+"?");
-        if (r == false) {
-           return;
-        }
-    }
-    SendGetHttp(url);
- 
-}
+
