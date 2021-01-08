@@ -3,8 +3,8 @@ var cmd_list=null;
 var cmd_list_copy=null;
 
 function preset_cmd_get() {
-    var url = "/preset_cmd";
-    SendGetHttp(url, process_preset_cmd_answer,function(){console.log("fail process_preset_cmd_answer")});
+    var url = "/config/preset_cmd.json";
+    SendGetHttp(url, process_preset_cmd_answer,on_ResponceErrorLog);
 }
 
 function preset_cmd_on_load(){
@@ -62,7 +62,7 @@ function preset_cmd_select(index){
         }
         $('#id_edit_item_dialog').modal('show');
     }else{
-//const found = array1.find(element => element > 10);
+        preset_cmd_send(cmd_list[index])
     }
 }
 
@@ -75,8 +75,12 @@ function preset_cmd_cancel(){
     preset_cmd_edit_exit();
 }
 
+function preset_cmd_dialog_get(){
+    return {name:$('#id_edit_item_dialog_name').val(),handler:$('#id_edit_item_handler').val(),val:$('#id_edit_item_val').val()}
+}
+
 function preset_cmd_dialog_save(){
-    const change = {name:$('#id_edit_item_dialog_name').val(),handler:$('#id_edit_item_handler').val(),val:$('#id_edit_item_val').val()}
+    const change = preset_cmd_dialog_get();
     if(0===change.name.length){
         alert("empty name");
         return;
@@ -100,6 +104,13 @@ function preset_cmd_dialog_save(){
         $('#id_cmd_name_'+edit_index).html(change.name);
     }
     $('#id_edit_item_dialog').modal('hide');
+}
+
+function preset_cmd_send(cmd){
+    console.log(cmd); 
+        url="/command?handler="+cmd.handler;
+        url+="&val="+cmd.val;
+        SendGetHttp(url,undefined,on_ResponceErrorLog);
 }
 
 function preset_cmd_set_edit(edit){

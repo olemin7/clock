@@ -79,10 +79,6 @@ function GetFileHttp(url, resultfn, errorfn) {
     xmlhttp.send();
 }
 
-function on_httpStatusResponce(responce){
-    var res = JSON.parse(responce);
-    console.log(res);
-    var status={};
-    status.stateSDcontrol=res.sdmode;
-    on_statusUpdate(status);
+function on_ResponceErrorLog(responce){
+    console.log("Error "+responce);
 }

@@ -106,26 +106,32 @@ void http_about()
 }
 
 void  setup_WebPages(){
+	otaUpdater.setup(&serverWeb, update_path, ota_username, ota_password);
 	serverWeb.on("/about", http_about);
     serverWeb.on("/scanwifi", HTTP_ANY,
-            [&]()
-            {
-    		wifiHandle_sendlist(serverWeb);
-            });
+            [&](){wifiHandle_sendlist(serverWeb);});
     serverWeb.on("/connectwifi", HTTP_ANY,
-            [&]()
-            {
-    		wifiHandle_connect(serverWeb);
-            });
+            [&](){wifiHandle_connect(serverWeb);});
+    serverWeb.on("/command", [&](){
+    	if (!serverWeb.hasArg("handler")){
+    		webRetResult(serverWeb, er_no_parameters);
+    		return;
+    	}
+    	const auto handler =serverWeb.arg("handler").c_str();
+    	int val=0;
+    	if (serverWeb.hasArg("val")){
+    		val=serverWeb.arg("val").toInt();
+    	}
+    	webRetResult(serverWeb, ledCmdSignal.onCmd(handler, val)?er_ok:er_errorResult);
+    });
 
-	serverWeb.serveStatic("/", LittleFS, "/www/index.html");
-	serverWeb.serveStatic("/", LittleFS, "/www/wifi.html");
-	serverWeb.serveStatic("/css", LittleFS, "/www/css");
-	serverWeb.serveStatic("/js", LittleFS, "/www/js");
+	serverWeb.serveStatic("/", LittleFS, "/www/");
 	serverWeb.onNotFound([] {
 		Serial.println("Error no handler");
 		Serial.println(serverWeb.uri());
+		webRetResult(serverWeb, er_fileNotFound);
 	});
+	serverWeb.begin();
 }
 
 void  setup_WIFIConnect(){
@@ -151,6 +157,7 @@ void  setup_WIFIConnect(){
 		WiFi.persistent(false);
 		WiFi.softAP(DEVICE_NAME, DEF_AP_PWD);
 		cout << "AP " << DEVICE_NAME << ",pwd: " << DEF_AP_PWD << ",ip:"<< WiFi.softAPIP().toString()<<std::endl;
+
     }
 }
 
@@ -162,11 +169,10 @@ void setup() {
 	DBG_PRINTLN(DEVICE_NAME);
     hw_info(cout);
 	LittleFS.begin();
+	dimableLed.setup();
 	MDNS.addService("http", "tcp", SERVER_PORT_WEB);
 	MDNS.begin(DEVICE_NAME);
-	otaUpdater.setup(&serverWeb, update_path, ota_username, ota_password);
 	setup_WebPages();
-    dimableLed.setup();
     LDRSignal.onSignal([](const uint8_t &level){
   	    matrix.setIntensity(level);
   	    cout << "matrix.setIntensity=" << level << endl;
@@ -187,7 +193,6 @@ void setup() {
 	//-----------------
 
 	mqtt.setClientID(DEVICE_NAME);
-	serverWeb.begin();
 
 	matrix.fillScreen(LOW);
 	matrix.setCursor(0, 7);
@@ -270,7 +275,7 @@ void loop() {
   wifiStateSignal.loop();
   mqtt_loop();
   ntpTime.loop();
-  time_loop();	
+  time_loop();
   dimableLed.loop();
   LDRSignal.loop();
   serverWeb.handleClient();

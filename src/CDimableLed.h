@@ -7,10 +7,14 @@
 
 #pragma once
 #include <Arduino.h>
+#include <stdint.h>
 #include <IRrecv.h>
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
 #include <IRtext.h>
+#include <string>
+#include <functional>
+#include <map>
 #include "./libs/CSignal.h"
 
 constexpr uint16_t kCaptureBufferSize = 1024;
@@ -20,19 +24,6 @@ constexpr auto GPIO_PIN_WALL_SWITCH = D2;
 constexpr auto GPIO_PIN_IRsensor = D3;
 constexpr auto TIMEOUT_WALL_SWITCH = 100;
 
-typedef enum {
-	CMD_LED_OFF=0,
-	CMD_LED_NIGHT,
-	CMD_LED_NIGHT_HIGHT,
-	CMD_LED_HIGHT,
-  CMD_LED_TOGGLE_STATE
-} led_cmd_t;
-
-
-constexpr auto LED_VAL_OFF = 0;
-constexpr auto LED_VAL_NIGHT = 2;
-constexpr auto LED_VAL_NIGHT_HIGHT = (PWMRANGE / 4);
-constexpr auto LED_VAL_HIGHT = PWMRANGE;
 
 class CIRSignal:public SignalLoop<uint64_t>{
 	IRrecv irrecv;
@@ -53,12 +44,23 @@ public:
 	void begin() override;
 };
 
-class CLedCmdSignal:public Signal<int >{
+/*
+ *
+ */
+
+class CLedCmdSignal:public Signal<uint16_t >{
 	int ledValue;
+	std::map<std::string , std::function <void(const int32_t)> > cmd_list;
+	void set(const int32_t val);
+	void toggle(const int32_t val);
+	bool m_enabled=false;
 public:
-	void onCmd(const led_cmd_t &cmd);
+	CLedCmdSignal();
+	bool onCmd(const std::string &cmd,const int32_t val);
 	void onIRcmd(const uint64_t &cmd);
 	void onWallcmd(const bool &state);
+	void loop();
+	void begin();
 };
 
 class CDimableLed {
