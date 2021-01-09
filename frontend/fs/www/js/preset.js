@@ -1,9 +1,13 @@
 var preset_list=null;
 var preset_list_copy=null;
+var preset_filename=null;
 
 
-function preset_init(){
+function preset_init(filename){
+    preset_filename=filename;
+    console.log("filename:"+preset_filename);
     present_changed(false);
+    SendGetHttp(preset_filename, process_preset_answer,on_ResponceErrorLog);
 }
 
 function preset_begin(list) {
@@ -16,6 +20,19 @@ function preset_begin(list) {
 function present_changed(val){
     $('#id_save').prop('disabled', !val);
     $('#id_cancel').prop('disabled', !val);
+}
+
+function process_preset_answer(response_text) {
+    try { 
+        var response = JSON.parse(response_text);
+        console.log(response);
+        preset_list = response.items;
+        preset_list_copy=[...response.items]
+        create_preset(preset_list);
+        present_changed(false);
+    } catch (e) {
+        console.error("Parsing error:", e);
+    }
 }
 
 // function preset_button_caption(item){
@@ -78,7 +95,10 @@ function preset_edit(index){
 
 function preset_save(){
     preset_list_copy=[...preset_list];
-    preset_onSave(preset_list);
+    const cfile = JSON.stringify({items:preset_list});
+    console.log(cfile); 
+    url="/filesave?path="+preset_filename+"&payload="+encodeURIComponent(cfile);
+    SendGetHttp(url,undefined,on_ResponceErrorLog);
     preset_edit_exit();
 }
 

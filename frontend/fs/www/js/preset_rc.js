@@ -1,6 +1,8 @@
+var cmd_list=null;
+
 function preset_rc_on_load(){
-    preset_init();
-    preset_rc_get();
+    preset_init("/config/preset_rc.json");
+    SendGetHttp("/config/preset_cmd.json", process_preset_cmd_answer,on_ResponceErrorLog);
 }
 //-------------- preset
 function preset_button_caption(item){
@@ -11,19 +13,19 @@ function preset_dialog_get(){
     return {code:Number($('#id_edit_item_dialog_rc').text()),cmd:$('#id_edit_item_cmd').val()}
 }
 
-function preset_onSave(list){
-    console.log('not implemented');
-}
-
 function preset_isDublicate(lhs,rhs){
     console.log('not implemented');
 }
 
 function preset_send(item){
     console.log(item); 
-    url="/command?handler="+item.handler;
-    url+="&val="+item.val;
-    SendGetHttp(url,undefined,on_ResponceErrorLog);
+    const found = cmd_list.find(element => element.name === item.cmd);
+    console.log(found);
+    if(found){
+        url="/command?handler="+found.handler;
+        url+="&val="+found.val;
+        SendGetHttp(url,undefined,on_ResponceErrorLog);
+    }
 }
 
 function present_edit_onOpen(index,item){
@@ -37,28 +39,12 @@ function present_edit_onOpen(index,item){
 }
 //<------
 
-function preset_rc_get() {
-    var url = "/config/preset_rc.json";
-    SendGetHttp(url, process_preset_rc_answer,on_ResponceErrorLog);
-    url = "/config/preset_cmd.json";
-    SendGetHttp(url, process_preset_cmd_answer,on_ResponceErrorLog);
-}
-
-function process_preset_rc_answer(response_text) {
-    try { 
-        var response = JSON.parse(response_text);
-        console.log(response);
-        preset_begin(response.items);
-    } catch (e) {
-        console.error("Parsing error:", e);
-    }
-}
-
 function process_preset_cmd_answer(response_text) {
     try { 
         var response = JSON.parse(response_text);
         console.log(response);
-        response.items.forEach(function(cmd){
+        cmd_list=response.items;
+        cmd_list.forEach(function(cmd){
           $('#id_edit_item_cmd').append(`<option value="${cmd.name}"> ${cmd.name}</option>`);  
         })
     } catch (e) {
