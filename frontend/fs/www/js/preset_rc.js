@@ -1,5 +1,3 @@
-var cmd_list=null;
-
 function preset_rc_on_load(){
     preset_init();
     preset_rc_get();
@@ -10,7 +8,7 @@ function preset_button_caption(item){
 }
 
 function preset_dialog_get(){
-    return {code:$('#id_edit_item_dialog_name').val(),cmd:$('#id_edit_item_handler').val()}
+    return {code:Number($('#id_edit_item_dialog_rc').text()),cmd:$('#id_edit_item_cmd').val()}
 }
 
 function preset_onSave(list){
@@ -30,7 +28,8 @@ function preset_send(item){
 
 function present_edit_onOpen(index,item){
     if(-1!==edit_index){
-        $('#id_edit_item_dialog_name').val(1);
+        $('#id_edit_item_dialog_rc').text(item.code);
+        $('#id_edit_item_cmd').val(item.cmd);
         $('#id_edit_item_dialog_head').html("edit");
     }else{
         $('#id_edit_item_dialog_head').html("Add");
@@ -59,7 +58,9 @@ function process_preset_cmd_answer(response_text) {
     try { 
         var response = JSON.parse(response_text);
         console.log(response);
-        cmd_list=response.items;
+        response.items.forEach(function(cmd){
+          $('#id_edit_item_cmd').append(`<option value="${cmd.name}"> ${cmd.name}</option>`);  
+        })
     } catch (e) {
         console.error("Parsing error:", e);
     }
