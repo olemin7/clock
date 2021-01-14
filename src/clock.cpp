@@ -317,11 +317,11 @@ void time_loop() {
 }
 
 void loop() {
-//  wifiStateSignal.loop();
-//  mqtt_loop();
-//  ntpTime.loop();
-//  time_loop();
-//  dimableLed.loop();
-//  LDRSignal.loop();
+    wifiStateSignal.loop();
+    mqtt_loop();
+    ntpTime.loop();
+    time_loop();
+    dimableLed.loop();
+    LDRSignal.loop();
     serverWeb.handleClient();
 }

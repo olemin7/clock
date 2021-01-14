@@ -15,6 +15,7 @@
 #include <string>
 #include <functional>
 #include <map>
+#include <tuple>
 #include "./libs/CSignal.h"
 
 constexpr uint16_t kCaptureBufferSize = 1024;
@@ -24,49 +25,51 @@ constexpr auto GPIO_PIN_WALL_SWITCH = D2;
 constexpr auto GPIO_PIN_IRsensor = D3;
 constexpr auto TIMEOUT_WALL_SWITCH = 100;
 
+constexpr auto JSON_FILE_PRESET_CMD = "/www/config/preset_cmd.json";
+constexpr auto JSON_FILE_PRESET_RC = "/www/config/preset_rc.json";
 
-class CIRSignal:public SignalLoop<uint64_t>{
-	IRrecv irrecv;
-public:
-	CIRSignal();
-	bool getExclusive(uint64_t &val, const uint32_t timeout=5000);
-	void begin() override;
-	void loop() override;
+class CIRSignal: public SignalLoop<uint64_t> {
+    IRrecv irrecv;
+    public:
+    CIRSignal();
+    bool getExclusive(uint64_t &val, const uint32_t timeout = 5000);
+    void begin() override;
+    void loop() override;
 };
 
-
-class CWallSwitchSignal:public SignalChange<bool>{
+class CWallSwitchSignal: public SignalChange<bool> {
 private:
-	bool preVal_;
-	uint32_t event_timeout;
-	bool getValue();
-	bool readRaw()const;
-public:
-	void begin() override;
+    bool preVal_;
+    uint32_t event_timeout;
+    bool getValue();
+    bool readRaw() const;
+    public:
+    void begin() override;
 };
 
 /*
  *
  */
 
-class CLedCmdSignal:public Signal<uint16_t >{
-	int ledValue;
-	std::map<std::string , std::function <void(const int32_t)> > cmd_list;
-	void set(const int32_t val);
-	void toggle(const int32_t val);
-	bool m_enabled=false;
-public:
-	CLedCmdSignal();
-	bool onCmd(const std::string &cmd,const int32_t val);
-	void onIRcmd(const uint64_t &cmd);
-	void onWallcmd(const bool &state);
-	void loop();
-	void begin();
+class CLedCmdSignal: public Signal<uint16_t> {
+    int ledValue;
+    std::map<std::string, std::function<void(const int32_t)> > m_cmd_list;
+    std::map<uint64_t, pair<string, int32_t>> m_ir_cmd;
+    void set(const int32_t val);
+    void toggle(const int32_t val);
+    bool m_enabled = false;
+    public:
+    CLedCmdSignal();
+    bool onCmd(const std::string &cmd, const int32_t val);
+    void onIRcmd(const uint64_t &cmd);
+    void onWallcmd(const bool &state);
+    void loop();
+    void begin();
 };
 
 class CDimableLed {
 public:
-	void setup();
+    void setup();
     void loop();
 };
 
