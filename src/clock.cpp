@@ -107,7 +107,34 @@ void http_about()
 
 void  setup_WebPages(){
 	otaUpdater.setup(&serverWeb, update_path, ota_username, ota_password);
+
+	serverWeb.on("/restart", [](){
+		webRetResult(serverWeb, er_ok);
+		delay(1000);
+		ESP.restart();
+	});
 	serverWeb.on("/about", http_about);
+	serverWeb.on("/filesave", [](){
+		DBG_PRINTLN("filesave");
+    	if (!serverWeb.hasArg("path") || !serverWeb.hasArg("payload")){
+    		webRetResult(serverWeb, er_no_parameters);
+    		return;
+    	}
+		const auto path=string("/www/")+serverWeb.arg("path").c_str();
+		cout<<path<<endl;
+		auto file = LittleFS.open(path.c_str(), "w");
+		if (!file) {
+			webRetResult(serverWeb, er_createFile);
+			return;
+		}
+		if(!file.print(serverWeb.arg("payload"))){
+			webRetResult(serverWeb, er_FileIO);
+			return;
+		}
+		file.close();
+		webRetResult(serverWeb, er_ok);
+	});
+
     serverWeb.on("/scanwifi", HTTP_ANY,
             [&](){wifiHandle_sendlist(serverWeb);});
     serverWeb.on("/connectwifi", HTTP_ANY,
@@ -124,6 +151,24 @@ void  setup_WebPages(){
     	}
     	webRetResult(serverWeb, ledCmdSignal.onCmd(handler, val)?er_ok:er_errorResult);
     });
+	serverWeb.on("/get_rc_val", [&](){
+		DBG_PRINTLN("get_rc_val ");
+		uint64_t val;
+		if(false==IRSignal.getExclusive(val)){
+			webRetResult(serverWeb, er_timeout);
+			return;
+		}
+
+		serverWeb.setContentLength(CONTENT_LENGTH_UNKNOWN);
+		serverWeb.sendHeader("Content-Type", "application/json", true);
+		serverWeb.sendHeader("Cache-Control", "no-cache");
+		ostringstream line;
+		line << "{\"rc_val\":";
+		line<< val;
+		line<<"}";
+		serverWeb.sendContent(line.str().c_str());
+		serverWeb.sendContent("");
+	});
 
 	serverWeb.serveStatic("/", LittleFS, "/www/");
 	serverWeb.onNotFound([] {
@@ -155,6 +200,7 @@ void  setup_WIFIConnect(){
 		//todo add key to swith
 		cout <<"fail"<< endl;
 		WiFi.persistent(false);
+		WiFi.mode(WIFI_AP);
 		WiFi.softAP(DEVICE_NAME, DEF_AP_PWD);
 		cout << "AP " << DEVICE_NAME << ",pwd: " << DEF_AP_PWD << ",ip:"<< WiFi.softAPIP().toString()<<std::endl;
 
@@ -272,11 +318,11 @@ void time_loop() {
 
 
 void loop() {
-  wifiStateSignal.loop();
-  mqtt_loop();
-  ntpTime.loop();
-  time_loop();
-  dimableLed.loop();
-  LDRSignal.loop();
+//  wifiStateSignal.loop();
+//  mqtt_loop();
+//  ntpTime.loop();
+//  time_loop();
+//  dimableLed.loop();
+//  LDRSignal.loop();
   serverWeb.handleClient();
 }

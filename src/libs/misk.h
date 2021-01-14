@@ -33,6 +33,7 @@ typedef enum {
     er_BuffOverflow,
     err_MarlinRead,
     er_FileIO,
+    er_timeout,
     er_last
 } te_ret;
 

@@ -180,6 +180,9 @@ void webRetResult(ESP8266WebServer &server, te_ret res)
         case er_FileIO:
             server.send(400, "text/plain", "er_FileIO");
             break;
+        case er_timeout:
+            server.send(400, "text/plain", "er_timeout");
+            break;
         default:
             server.send(400, "text/plain", "undefined");
             break;

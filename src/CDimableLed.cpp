@@ -21,6 +21,22 @@ CWallSwitchSignal WallSwitchSignal;
 CLedCmdSignal ledCmdSignal;
 
 CIRSignal::CIRSignal():irrecv(GPIO_PIN_IRsensor, kCaptureBufferSize, kTimeout, false){};
+
+bool CIRSignal::getExclusive(uint64_t &val, const uint32_t timeout){
+	const auto wait = millis()+timeout;
+	decode_results results;
+	while(wait>millis()){
+	  if (irrecv.decode(&results)) {  // We have captured something.
+		  irrecv.resume();
+		  cout<<"excl IR =" << std::hex<<results.value <<endl;
+		  val=results.value;
+		  return true;
+	   }
+	  yield();
+	}
+	return false;
+}
+
 void CIRSignal::begin(){
 	irrecv.enableIRIn();  // Start up the IR receiver.
 }
@@ -28,11 +44,11 @@ void CIRSignal::begin(){
 void CIRSignal::loop(){
 	  decode_results results;
 	  if (irrecv.decode(&results)) {  // We have captured something.
+		  irrecv.resume();
 		  cout<<"IR =" << std::hex<<results.value <<endl;
 		  if(!results.repeat){
 			  this->notify(results.value);
 		  }
-	     irrecv.resume();
 	   }
 }
 bool CWallSwitchSignal::readRaw()const{
@@ -87,31 +103,6 @@ void CLedCmdSignal::toggle(const int32_t val){
 	set(ledValue?LED_VAL_OFF:LED_VAL_MAX);
 }
 
-//void CLedCmdSignal::onCmd(const led_cmd_t &cmd const int32_t val){
-//	DBG_PRINT("LED CMD ");
-//	DBG_PRINTLN(cmd);
-//	switch(cmd){
-//	case CMD_LED_OFF:
-//		ledValue=LED_VAL_OFF;
-//		break;
-//	case CMD_LED_NIGHT:
-//		ledValue=LED_VAL_NIGHT;
-//		break;
-//	case CMD_LED_NIGHT_HIGHT:
-//		ledValue=LED_VAL_NIGHT_HIGHT;
-//		break;
-//	case CMD_LED_HIGHT:
-//		ledValue=LED_VAL_HIGHT;
-//		break;
-//	case CMD_LED_TOGGLE_STATE:
-//		ledValue=(LED_VAL_OFF == ledValue) ? LED_VAL_HIGHT : LED_VAL_OFF;
-//		break;
-//	default:
-//		DBG_PRINTLN("LED no handler\n");
-//		return;
-//	}
-//	this->notify(ledValue);
-//}
 
 bool CLedCmdSignal::onCmd(const std::string &cmd,const int32_t val){
 	cout<< "cmd="<<cmd<<", val="<<std::hex<<val<<endl;
