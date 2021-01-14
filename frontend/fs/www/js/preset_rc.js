@@ -44,8 +44,8 @@ function process_preset_cmd_answer(response_text) {
         var response = JSON.parse(response_text);
         console.log(response);
         cmd_list=response.items;
-        cmd_list.forEach(function(cmd){
-          $('#id_edit_item_cmd').append(`<option value="${cmd.name}"> ${cmd.name}</option>`);  
+        cmd_list.forEach(function(item){
+          $('#id_edit_item_cmd').append(`<option value="${item.cmd}"> ${item.cmd}</option>`);  
         })
     } catch (e) {
         console.error("Parsing error:", e);

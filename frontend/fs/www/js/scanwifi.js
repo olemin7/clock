@@ -9,7 +9,7 @@ function onLoad(){
 function refresh_scanwifi() {
     $('#AP_list').html("Scanning");
     var url = "/scanwifi";
-    SendGetHttp(url, process_scanWifi_answer, getscanWififailed);
+    SendGetHttp(url, process_scanWifi_answer, on_ResponceErrorLog);
 }
 
 function process_scanWifi_answer(response_text) {
@@ -58,10 +58,9 @@ function select_ap_ssid(ssid_name, isProtected) {
            return;
         }
     }
-    SendGetHttp(url);
+    SendGetHttp(url,function(){
+        alert("ok")
+    });
  
 }
 
-function getscanWififailed(error_code, response) {
-
-}

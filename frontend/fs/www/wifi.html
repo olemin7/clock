@@ -25,6 +25,26 @@
 <!--
     refresh_scanwifi
 -->
+<div class="card">
+    <div class="card-header"> AP config</div>
+    <div class="card-body">
+        <form class="row g-3 needs-validation" novalidate>
+            <div class="col-md-6">
+                <label for="id_ap_config_name" class="form-label">AP name</label>
+                <input type="text" class="form-control" id="id_ap_config_name" required>
+            </div>
+            <div class="col-md-4">
+                <label for="id_ap_config_pwd" class="form-label">pwd</label>
+                <input type="text" class="form-control" id="id_ap_config_pwd" required>
+            </div>
+            <button class="btn btn-primary col-md-2" onclick="start_ap() ">start AP</button>
+        </form>
+    </div>
+</div>
+<!-- -->
+<!--
+    refresh_scanwifi
+-->
 <div id="wifi" class="card">
     <div class="card-header"> AP List</div>
     <button class="btn btn-primary" onclick="refresh_scanwifi() ">scanwifi</button>
