@@ -76,31 +76,35 @@ void setup_matrix() {
     matrix.write();
 }
 
-void http_about()
+void http_status()
 {
-    DBG_PRINTLN("http_about ");
+    CDBG_FUNK();
     serverWeb.setContentLength(CONTENT_LENGTH_UNKNOWN);
-    serverWeb.sendHeader("Content-Type", "text/plain", true);
-    std::ostringstream sAbout;
-
-    sAbout << "Compiled :" << __DATE__ << " " << __TIME__ << std::endl;
-    sAbout << "Serial Speed " << SERIAL_BAUND << std::endl;
-    sAbout << getResetInfo().c_str() << std::endl;
-    sAbout << "RSSI " << WiFi.RSSI() << std::endl;
-
-    sAbout << std::endl;
+    serverWeb.sendHeader("Content-Type", "application/json", true);
+    serverWeb.sendHeader("Cache-Control", "no-cache");
+    ostringstream line;
+    line << "{";
+    line << "\"Compiled \":" << __DATE__ << " " << __TIME__ << endl;
+    line << ",\"Serial Speed\":" << SERIAL_BAUND << endl;
+    line << ",\"getResetInfo\":" << getResetInfo().c_str() << endl;
+    line << ",\"RSSI\":" << WiFi.RSSI() << endl;
 
     const auto local = get_local_time();
-    sAbout << "timeStatus= " << timeStatus();
-    sAbout << "time: " << hour(local) << ":" << minute(local) << std::endl;
-    sAbout << "Temperature= " << dht.getTemperature() << ", Humidity=" << dht.getHumidity() << std::endl;
-    sAbout << "LDR=" << LDRSignal.get() << std::endl;
-
-    serverWeb.sendContent(sAbout.str().c_str());
+    line << ",\"timeStatus\":" << timeStatus_toStr(timeStatus());
+    line << ",\"time\":" << std::ctime(&local) << endl;
+    line << ",\"Temperature\":" << dht.getTemperature() << endl;
+    line << ",\"Humidity\":" << dht.getHumidity() << endl;
+    line << ",\"LDR\":" << LDRSignal.get() << endl;
+    line << ",\"DEBUG_STREAM\":";
 #ifdef DEBUG_STREAM
-    serverWeb.sendContent("\nDEBUG_STREAM on");
+    line << true;
+#else
+        line<< false;
 #endif
+    line << endl;
     //---------------
+    line << "}";
+    serverWeb.sendContent(line.str().c_str());
     serverWeb.sendContent("");
 }
 
@@ -112,7 +116,7 @@ void setup_WebPages() {
         delay(1000);
         ESP.restart();
     });
-    serverWeb.on("/about", http_about);
+    serverWeb.on("/status", http_status);
     serverWeb.on("/filesave", []() {
         DBG_PRINTLN("filesave");
         if (!serverWeb.hasArg("path") || !serverWeb.hasArg("payload")) {
@@ -215,6 +219,8 @@ void setup() {
     //pinMode(DHTPin, INPUT); setted in driver
 
     Serial.begin(SERIAL_BAUND);
+    CDBG_FUNK();
+
     DBG_PRINTLN(DEVICE_NAME);
     hw_info(cout);
     LittleFS.begin();

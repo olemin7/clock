@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <sstream>
+#include <ctime>
 
 #include "./libs/NTPtime.h"
 #include "./libs/Max72xxPanel.h" // https://github.com/markruys/arduino-Max72xxPanel.git

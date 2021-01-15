@@ -55,17 +55,30 @@ function process_preset_cmd_answer(response_text) {
 function preset_rc_scan(){
     $('#id_edit_item_dialog_rc').text("wait IR");
     var url = "/get_rc_val";
-    SendGetHttp(url, preset_on_rc_scan,function(res){
+    SendGetHttp(url, preset_on_rc_scan1,function(res){
         console.error(res);
         $('#id_edit_item_dialog_rc').text("fail");
     });
 }
 
-function preset_on_rc_scan(response){
+var rc_val=0;
+function preset_on_rc_scan1(response){
     console.log(response);
-    $('#id_edit_item_dialog_rc').text(JSON.parse(response).rc_val);
+    $('#id_edit_item_dialog_rc').text("one more");
+    rc_val=Number(JSON.parse(response).rc_val);
+    var url = "/get_rc_val";
+    SendGetHttp(url, preset_on_rc_scan2,function(res){
+        console.error(res);
+        $('#id_edit_item_dialog_rc').text("fail");
+    });
 }
 
-
-
+function preset_on_rc_scan2(response){
+    console.log(response);
+    if(rc_val!==Number(JSON.parse(response).rc_val)){
+         $('#id_edit_item_dialog_rc').text("different codes");
+    }else{
+        $('#id_edit_item_dialog_rc').text(rc_val);
+    }
+}
 

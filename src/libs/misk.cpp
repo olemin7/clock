@@ -11,9 +11,22 @@
 #include <sstream>
 using namespace std;
 
-ostream& operator<<(ostream& os, const String& str){
-	os << str.c_str();
-	return os;
+ostream& operator<<(ostream &os, const String &str) {
+    os << str.c_str();
+    return os;
+}
+
+std::string timeStatus_toStr(const timeStatus_t &state) {
+    switch (state) {
+        case timeNotSet:
+            return "timeNotSet";
+        case timeNeedsSync:
+            return "timeNeedsSync";
+        case timeSet:
+            return "timeSet";
+        default:
+            return "unknown";
+    }
 }
 
 void LED_ON()
@@ -35,7 +48,7 @@ void blink()
 }
 
 String getMimeType(String path)
-{
+        {
 // ------------------------
     if (path.endsWith(".html"))
         return "text/html";
@@ -85,46 +98,46 @@ String getMimeType(String path)
 }
 
 void hw_info(std::ostream &out)
-{
-	out << "Compiled "<<__DATE__<< " "<< __TIME__;
-	out << "hw_info ->" << endl;
-	out << "CpuFreqMHz "<< ESP.getCpuFreqMHz() << endl;
-	out << "getFreeHeap "<< ESP.getFreeHeap() << endl;
+        {
+    out << "Compiled " << __DATE__ << " " << __TIME__;
+    out << "hw_info ->" << endl;
+    out << "CpuFreqMHz " << ESP.getCpuFreqMHz() << endl;
+    out << "getFreeHeap " << ESP.getFreeHeap() << endl;
     const auto realSize = ESP.getFlashChipRealSize();
     const auto ideSize = ESP.getFlashChipSize();
     const auto ideMode = ESP.getFlashChipMode();
     out << "Flash info" << endl;
-    out << "id:"<< ESP.getFlashChipId() << endl;
-    out << "size:"<< realSize << endl;
+    out << "id:" << ESP.getFlashChipId() << endl;
+    out << "size:" << realSize << endl;
     if (ideSize != realSize)
-    {
-    	out << "!!Different size\nFlash IDE size:"<< ideSize<<endl;
+            {
+        out << "!!Different size\nFlash IDE size:" << ideSize << endl;
     }
-    out << "ide speed:"<< ESP.getFlashChipSpeed()<<endl;
+    out << "ide speed:" << ESP.getFlashChipSpeed() << endl;
     out << "ide mode: ";
     switch (ideMode)
     {
         case FM_QIO:
-            out << "QIO" <<endl;
+            out << "QIO" << endl;
             break;
         case FM_QOUT:
-            out << "QOUT" <<endl;
+            out << "QOUT" << endl;
             break;
         case FM_DIO:
-            out << "DIO" <<endl;
+            out << "DIO" << endl;
             break;
         case FM_DOUT:
-            out << "DOUT" <<endl;
+            out << "DOUT" << endl;
             break;
         default:
             out << ideMode;
-            out << " UNKNOWN" <<endl;
+            out << " UNKNOWN" << endl;
     }
-    out<<"<- Flash info";
+    out << "<- Flash info";
 }
 
 void LittleFS_info(std::ostream &out)
-{
+        {
     out << "LittleFS_info" << endl;
     FSInfo info;
     LittleFS.info(info);
@@ -137,7 +150,7 @@ void LittleFS_info(std::ostream &out)
 //
     out << "files:" << endl;
     auto dir = LittleFS.openDir("/");
-    auto index=0;
+    auto index = 0;
     while (dir.next())
     {
         out << index++ << "." << dir.fileName() << " SZ:" << dir.fileSize() << endl;
@@ -146,7 +159,7 @@ void LittleFS_info(std::ostream &out)
 }
 
 void webRetResult(ESP8266WebServer &server, te_ret res)
-{
+        {
     DBG_PRINT("Err ");
     DBG_PRINTLN(res);
     switch (res) {
@@ -190,22 +203,22 @@ void webRetResult(ESP8266WebServer &server, te_ret res)
 }
 
 bool isExtMach(const std::string &name, const std::string &ext)
-{
+        {
     const auto pos = name.find_last_of('.');
     if (std::string::npos == pos)
-    {
+            {
         return false; //no extention
     }
     const auto fext = name.substr(pos + 1);
     if (fext.length() != ext.length())
-    {
+            {
         return false;
     }
     auto n = fext.length();
     while (n--)
     {
         if (std::toupper(fext.at(n)) != std::toupper(ext.at(n)))
-        {
+                {
             return false;
         }
     }
@@ -260,7 +273,7 @@ std::string getResetInfo() {
     return info.str();
 }
 std::string to_string(uint32_t ul)
-{
+        {
     char tt[20];
     snprintf(tt, sizeof(tt) - 1, "%u", ul);
     tt[sizeof(tt) - 1] = 0;

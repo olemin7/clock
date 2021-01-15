@@ -11,8 +11,10 @@
 #include <ESP8266WebServer.h>
 #include <string>
 #include <ostream>
+#include "./libs/TimeLib.h"
 
-std::ostream& operator<<(std::ostream& os, const String& str);
+std::ostream& operator<<(std::ostream &os, const String &str);
+std::string timeStatus_toStr(const timeStatus_t&);
 
 void LED_ON();
 void LED_OFF();
@@ -44,7 +46,7 @@ bool isExtMach(const std::string &name, const std::string &ext);
 struct CompareCStrings
 {
     bool operator()(const char *lhs, const char *rhs) const
-    {
+            {
         return strcmp(lhs, rhs) < 0;
     }
 };

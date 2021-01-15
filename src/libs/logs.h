@@ -1,36 +1,56 @@
 /*
  * log.h
  *
- *  Created on: 30 זמגע. 2019 נ.
+ *  Created on: 15 jan 2021
  *      Author: ominenko
  */
 
-#ifndef LIBS_LOGS_H_
-#define LIBS_LOGS_H_
-#ifndef UNIT_TEST
+#pragma once
 #include <sdios.h>
-#include <Stream.h>
-#endif
-// debug does not work with marlin
+#include <iostream>
+#include <ostream>
+
 #define DEBUG_STREAM Serial
 
-#define ERR_LOG(...){\
-DBG_PRINT(";ERR ");DBG_PRINT(__FILE__);DBG_PRINT(":");DBG_PRINT(static_cast<unsigned>(__LINE__));\
-DBG_PRINT(" ");DBG_PRINTLN(__VA_ARGS__);}
+class NullBuffer: public std::streambuf
+{
+public:
+    int overflow(int c) {
+        return c;
+    }
+};
 
-#define DBG_FUNK_LINE()      {DBG_PRINT(__FUNCTION__); DBG_PRINT(":"); DBG_PRINTLN(__LINE__);}
+extern std::ostream null_stream;
 
 #ifdef DEBUG_STREAM
-#ifdef UNIT_TEST
-#define DBG_PRINT(...)       { std::cout <<__VA_ARGS__; }
-#define DBG_PRINTLN(...)     { std::cout <<__VA_ARGS__;}
+#define DBG_OUT std::cout
 #else
-#define DBG_PRINT(...)       { Serial.print(__VA_ARGS__); }
-#define DBG_PRINTLN(...)     { Serial.println(__VA_ARGS__); }
+    #define DBG_OUT null_stream
 #endif
 
+class Cdbg_funk
+{
+    const char *m_func;
+    public:
+    Cdbg_funk(const char *file, const char *func) :
+            m_func(func) {
+        DBG_OUT << ">>enter func:" << FPSTR(m_func) << std::endl;
+    }
+    ~Cdbg_funk() {
+        DBG_OUT << "<<exit func:" << FPSTR(m_func) << std::endl;
+    }
+};
+
+#ifdef DEBUG_STREAM
+#define CDBG_FUNK() Cdbg_funk dbg_funk(__FILE__,__FUNCTION__)
+#define DBG_PRINT(...)       { Serial.print(__VA_ARGS__); }
+#define DBG_PRINTLN(...)     { Serial.println(__VA_ARGS__); }
 #else
+    #define CDBG_FUNK()
 #define DBG_PRINT(...)       {}
 #define DBG_PRINTLN(...)  {}
+
 #endif
-#endif /* LIBS_LOGS_H_ */
+
+#define DBG_FUNK_LINE()  DBG_OUT<<    FPSTR(__FUNCTION__)<<":"<<FPSTR(__LINE__)<<endl
+
