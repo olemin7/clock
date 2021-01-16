@@ -279,3 +279,37 @@ std::string to_string(uint32_t ul)
     tt[sizeof(tt) - 1] = 0;
     return std::string(tt);
 }
+
+bool isSafeMode(const uint8_t pin, unsigned long timeout) {
+    bool result = false;
+    pinMode(pin, INPUT_PULLUP);
+    delay(100);
+    LED_ON();
+    if (!digitalRead(pin)) {
+        const auto till = millis() + timeout;
+        unsigned long blink = 0;
+        bool led = true;
+        while (1) {
+            const auto now = millis();
+            if (now > till) {
+                break;
+            }
+            if (now > blink) {
+                led = !led;
+                if (led) {
+                    LED_ON();
+                } else {
+                    LED_OFF();
+                }
+                blink = now + 300;
+            }
+            if (digitalRead(pin)) {
+                result = true;
+                break;
+            }
+            yield();
+        }
+    }
+    LED_OFF();
+    return result;
+}

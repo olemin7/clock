@@ -14,6 +14,7 @@ const auto MQTT_REFRESH_PERIOD = 5 * 1000;
 #endif
 
 const char *update_path = "/firmware";
+bool is_safe_mobe = false;
 
 Timezone myTZ((TimeChangeRule ) { "DST", Last, Sun, Mar, 3, +3 * 60 },
         (TimeChangeRule ) { "STD", Last, Sun, Oct, 4, +2 * 60 });
@@ -193,40 +194,32 @@ void setup_WIFIConnect() {
     }
     );
     wifiStateSignal.begin();
-    if (WIFI_STA == WiFi.getMode())
-            {
-        const auto now = millis() + WIFI_CONNECT_TIMEOUT;
-        cout << "connecting <" << WiFi.SSID() << "> " << endl;
-        while (now > millis()) {
-            if (WL_CONNECTED == WiFi.status()) {
-                return;
-            }
-            blink();
-        }
-        //Temporary server
-        //todo add key to swith
-        cout << "fail" << endl;
+    if (is_safe_mobe) {
         WiFi.persistent(false);
         WiFi.mode(WIFI_AP);
-        WiFi.softAP(DEVICE_NAME, DEF_AP_PWD);
-        cout << "AP " << DEVICE_NAME << ",pwd: " << DEF_AP_PWD << ",ip:" << WiFi.softAPIP().toString() << std::endl;
-
+        WiFi.softAP(config.getDeviceName(), config.getAPPwd());
+        DBG_OUT << "safemode AP " << config.getDeviceName() << ",pwd: " << config.getAPPwd() << ",ip:" << WiFi.softAPIP().toString() << std::endl;
+    } else if (WIFI_STA == WiFi.getMode()) {
+        DBG_OUT << "connecting <" << WiFi.SSID() << "> " << endl;
     }
 }
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
-    //pinMode(DHTPin, INPUT); setted in driver
+    is_safe_mobe = isSafeMode(GPIO_PIN_WALL_SWITCH, 3000);
+//pinMode(DHTPin, INPUT); setted in driver
 
     Serial.begin(SERIAL_BAUND);
     CDBG_FUNK();
-
-    DBG_PRINTLN(DEVICE_NAME);
+    std::cout << "is_safe_mobe=" << is_safe_mobe << endl;
     hw_info(cout);
     LittleFS.begin();
+    if (!config.setup()) {
+        config.setDefault();
+    }
     dimableLed.setup();
     MDNS.addService("http", "tcp", SERVER_PORT_WEB);
-    MDNS.begin(DEVICE_NAME);
+    MDNS.begin(config.getDeviceName());
     setup_WebPages();
     LDRSignal.onSignal([](const uint8_t &level) {
         matrix.setIntensity(level);
@@ -238,16 +231,16 @@ void setup() {
     LittleFS_info(cout);
     setup_matrix();
 
-    mqtt.setup(mqtt_server, mqtt_port);
-    //--------------
+    mqtt.setup(config.getMqttServer(), config.getMqttPort());
+//--------------
 
     ntpTime.init();
     ntpTime.setCallback(setTime_);
-    //------------------
+//------------------
     dht.setup(DHTPin, DHTesp::DHT22);
-    //-----------------
+//-----------------
 
-    mqtt.setClientID(DEVICE_NAME);
+    mqtt.setClientID(config.getDeviceName());
 
     matrix.fillScreen(LOW);
     matrix.setCursor(0, 7);

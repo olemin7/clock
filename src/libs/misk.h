@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#ifndef UNIT_TEST
+#include <stdint.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <string>
@@ -41,7 +41,6 @@ typedef enum {
 
 void webRetResult(ESP8266WebServer &server, te_ret res);
 bool isExtMach(const std::string &name, const std::string &ext);
-#endif
 
 struct CompareCStrings
 {
@@ -52,3 +51,8 @@ struct CompareCStrings
 };
 std::string getResetInfo();
 std::string to_string(uint32_t ul);
+
+/*
+ *  on start 0 during timeout 1
+ */
+bool isSafeMode(const uint8_t pin, unsigned long timeout);

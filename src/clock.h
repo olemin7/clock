@@ -49,6 +49,7 @@
 #include "./libs/TimeLib.h"
 #include "./libs/Timezone.h"
 #include "./libs/logs.h"
+#include <libs/CConfig.h>
 
 #include "secret.h_ex"
 
@@ -56,13 +57,13 @@
 
 #define MQTT_TEMPERATURE (1+(ROOM-1)*2)
 #define MQTT_HUMIDITY (MQTT_TEMPERATURE+1)
-#define DEVICE_NAME "CLOCK_" ROOM_NAME
-#define DEF_AP_PWD "12345678"
+
+constexpr auto ota_username = "";
+constexpr auto ota_password = "";
 
 #define DEBUG
 
 #define SERIAL_BAUND 115200
 #define SERVER_PORT_WEB 80
 #define WIFI_CONNECT_TIMEOUT 20000 //ms
-
 #endif /* CLOCK_CLOCK_H_ */
