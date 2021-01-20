@@ -20,8 +20,9 @@ class CConfig {
     bool setup();
     void setDefault();
     const char* getDeviceName() const;
-    const char* getAPPwd() const;
     const char* getMqttServer() const;
     const int getMqttPort() const;
+    const char* getOtaUsername() const;
+    const char* getOtaPassword() const;
 };
 extern CConfig config;

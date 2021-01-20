@@ -1,10 +1,20 @@
-var ssid_item_scanwifi = -1;
-var ssid_subitem_scanwifi = -1;
-//scanwifi dialog
+
+var ap_name = null
 function onLoad(){
     refresh_scanwifi()
-
+    SendGetHttp(config_file_name, config_answer,on_ResponceErrorLog);
 }
+
+function config_answer(response_text) {
+    try { 
+        var response = JSON.parse(response_text);
+        console.log(response);
+        ap_name =response.DEVICE_NAME;
+    } catch (e) {
+        console.error("Parsing error:", e);
+    }
+}
+
 
 function refresh_scanwifi() {
     $('#AP_list').html("Scanning");
@@ -47,7 +57,7 @@ function process_scanWifi_answer(response_text) {
 function select_ap_ssid(ssid_name, isProtected) {
     var url = "/connectwifi?ssid="+ssid_name;
     if(isProtected){
-        var passwd = prompt("connect to "+ssid_name, "your password here");
+        var passwd = prompt(`connect to ${ssid_name}, your password here`);
         if(passwd==null){
             return;
         }
@@ -64,3 +74,12 @@ function select_ap_ssid(ssid_name, isProtected) {
  
 }
 
+function start_ap(){
+    var passwd = prompt(`AP: ${ap_name}, password`, "01234567")
+    if(passwd==null){
+        return;
+    }
+    SendGetHttp(`/start_ap?name=${ap_name}&pwd=${passwd}`,function(){
+        alert("ok")
+    });
+}

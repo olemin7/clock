@@ -58,9 +58,6 @@
 #define MQTT_TEMPERATURE (1+(ROOM-1)*2)
 #define MQTT_HUMIDITY (MQTT_TEMPERATURE+1)
 
-constexpr auto ota_username = "";
-constexpr auto ota_password = "";
-
 #define DEBUG
 
 #define SERIAL_BAUND 115200

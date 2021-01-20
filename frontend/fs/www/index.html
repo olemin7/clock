@@ -31,25 +31,30 @@
 </head>
 <body onload="onIndexLoad()">
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary rounded">
-    <ul class="navbar-nav">
-        <li class="nav-item">
-            <a class="nav-link" href="/status">About</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/firmware">firmware</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/wifi.html">select wifi</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/config_rc.html">config RC</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/config_mqtt.html">config MQTT</a>
-        </li>
-    </ul>
+    <div class="container-fluid">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="/status">About</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/firmware">firmware</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/wifi.html">select wifi</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/config_rc.html">config RC</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/config.html">config</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/logs.html">logs</a>
+            </li>
+        </ul>
 
-    <button type="button" class="btn btn-danger" onclick='reboot_request()' id='id_restart'>Restart</button>
+        <button type="button" class="btn btn-danger" onclick='reboot_request()' id='id_restart'>Restart</button>
+    </div>
 </nav>
 
 <!--

@@ -110,7 +110,7 @@ void http_status()
 }
 
 void setup_WebPages() {
-    otaUpdater.setup(&serverWeb, update_path, ota_username, ota_password);
+    otaUpdater.setup(&serverWeb, update_path, config.getOtaUsername(), config.getOtaPassword());
 
     serverWeb.on("/restart", []() {
         webRetResult(serverWeb, er_ok);
@@ -197,8 +197,8 @@ void setup_WIFIConnect() {
     if (is_safe_mobe) {
         WiFi.persistent(false);
         WiFi.mode(WIFI_AP);
-        WiFi.softAP(config.getDeviceName(), config.getAPPwd());
-        DBG_OUT << "safemode AP " << config.getDeviceName() << ",pwd: " << config.getAPPwd() << ",ip:" << WiFi.softAPIP().toString() << std::endl;
+        WiFi.softAP(config.getDeviceName(), DEF_AP_PWD);
+        DBG_OUT << "safemode AP " << config.getDeviceName() << ",pwd: " << DEF_AP_PWD << ",ip:" << WiFi.softAPIP().toString() << std::endl;
     } else if (WIFI_STA == WiFi.getMode()) {
         DBG_OUT << "connecting <" << WiFi.SSID() << "> " << endl;
     }
@@ -214,7 +214,7 @@ void setup() {
     std::cout << "is_safe_mobe=" << is_safe_mobe << endl;
     hw_info(cout);
     LittleFS.begin();
-    if (!config.setup()) {
+    if (!config.setup() || is_safe_mobe) {
         config.setDefault();
     }
     dimableLed.setup();
@@ -231,6 +231,7 @@ void setup() {
     LittleFS_info(cout);
     setup_matrix();
 
+    mqtt.setClientID(config.getDeviceName());
     mqtt.setup(config.getMqttServer(), config.getMqttPort());
 //--------------
 
@@ -239,8 +240,6 @@ void setup() {
 //------------------
     dht.setup(DHTPin, DHTesp::DHT22);
 //-----------------
-
-    mqtt.setClientID(config.getDeviceName());
 
     matrix.fillScreen(LOW);
     matrix.setCursor(0, 7);
