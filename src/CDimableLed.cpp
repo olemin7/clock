@@ -14,7 +14,7 @@
 #include <LittleFS.h>
 using namespace std;
 
-constexpr auto LED_VAL_OFF = 0;
+constexpr auto LED_VAL_MIN = 0;
 constexpr auto LED_VAL_MAX = 1023; //PWMRANGE;
 
 CIRSignal IRSignal;
@@ -86,7 +86,7 @@ void CWallSwitchSignal::begin() {
  *
  */
 CLedCmdSignal::CLedCmdSignal() :
-        ledValue(LED_VAL_OFF) {
+        m_ledValue(0) {
     m_cmd_list = {
             { "set", bind(&CLedCmdSignal::set, this, placeholders::_1) },
             { "toggle", bind(&CLedCmdSignal::toggle, this, placeholders::_1) }
@@ -152,18 +152,19 @@ std::map<uint64_t, pair<string, int32_t>> json_get_ir_cmd_map() {
 void CLedCmdSignal::begin() {
     m_ir_cmd = std::move(json_get_ir_cmd_map());
     m_enabled = true;
-    this->notify(ledValue);
+    this->notify(m_ledValue);
 }
 
 void CLedCmdSignal::set(const int32_t val) {
-    ledValue = val;
+    m_ledValue = (100 > val) ? val : 100;
+    const auto duty = (10 > m_ledValue) ? val : (LED_VAL_MIN + m_ledValue * (LED_VAL_MAX - LED_VAL_MIN) / 100);
     if (m_enabled) {
-        this->notify(ledValue);
+        this->notify(duty);
     }
 }
 
 void CLedCmdSignal::toggle(const int32_t val) {
-    set(ledValue ? LED_VAL_OFF : LED_VAL_MAX);
+    set(m_ledValue ? 0 : 100);
 }
 
 bool CLedCmdSignal::onCmd(const std::string &cmd, const int32_t val) {
@@ -199,7 +200,7 @@ void CDimableLed::setup() {
         cout << "DIMABLE_LED_VAL=" << val << endl;
         if (0 == val) {
             digitalWrite(GPIO_POUT_LED, 0);
-        } else if (LED_VAL_MAX < val) {
+        } else if (LED_VAL_MAX <= val) {
             digitalWrite(GPIO_POUT_LED, 1);
         } else {
             analogWrite(GPIO_POUT_LED, val);

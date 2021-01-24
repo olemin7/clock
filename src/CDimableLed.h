@@ -52,14 +52,17 @@ private:
  */
 
 class CLedCmdSignal: public Signal<uint16_t> {
-    int ledValue;
+    uint8_t m_ledValue;
     std::map<std::string, std::function<void(const int32_t)> > m_cmd_list;
     std::map<uint64_t, pair<string, int32_t>> m_ir_cmd;
-    void set(const int32_t val);
-    void toggle(const int32_t val);
     bool m_enabled = false;
     public:
     CLedCmdSignal();
+    uint8_t getVal() const {
+        return m_ledValue;
+    }
+    void set(const int32_t val);
+    void toggle(const int32_t val);
     bool onCmd(const std::string &cmd, const int32_t val);
     void onIRcmd(const uint64_t &cmd);
     void onWallcmd(const bool &state);

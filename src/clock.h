@@ -51,8 +51,6 @@
 #include "./libs/logs.h"
 #include <libs/CConfig.h>
 
-#include "secret.h_ex"
-
 #include "CDimableLed.h"
 
 #define MQTT_TEMPERATURE (1+(ROOM-1)*2)

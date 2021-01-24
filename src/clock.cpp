@@ -7,12 +7,6 @@ constexpr auto numberOfVerticalDisplays = 1;
 
 constexpr auto DHTPin = D4;
 
-#ifndef DEBUG
-const auto MQTT_REFRESH_PERIOD = 15 * 60 * 1000;
-#else
-const auto MQTT_REFRESH_PERIOD = 5 * 1000;
-#endif
-
 const char *update_path = "/firmware";
 bool is_safe_mobe = false;
 
@@ -30,6 +24,7 @@ void setTime_(const time_t &par) {
 auto matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
 NTPtime ntpTime;
+void mqtt_send();
 
 class CLDRSignal: public SignalChange<uint8_t> {
     CLightDetectResistor ldr;
@@ -61,12 +56,13 @@ CWifiStateSignal wifiStateSignal;
 
 void setup_matrix() {
     matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
-#ifdef  LED_MATRIX_ROTATION
-    matrix.setRotation(0, LED_MATRIX_ROTATION);
-    matrix.setRotation(1, LED_MATRIX_ROTATION);
-    matrix.setRotation(2, LED_MATRIX_ROTATION);
-    matrix.setRotation(3, LED_MATRIX_ROTATION);
-#endif //LED_MATRIX_ROTATION
+    const auto rotation = config.getLedMattixRotation();
+    if (rotation) {
+        matrix.setRotation(0, rotation);
+        matrix.setRotation(1, rotation);
+        matrix.setRotation(2, rotation);
+        matrix.setRotation(3, rotation);
+    }
     matrix.setFont(&FreeMono9pt7b);
     matrix.setTextWrap(false);
     matrix.fillScreen(LOW);
@@ -77,6 +73,19 @@ void setup_matrix() {
     matrix.write();
 }
 
+void get_status(ostream &out) {
+    out << "{";
+    out << "\"getResetInfo\":" << system_get_rst_info()->reason << endl;
+    const auto local = get_local_time();
+    out << ",\"timeStatus\":" << timeStatus_toStr(timeStatus()) << endl;
+    out << ",\"time\":" << std::ctime(&local) << endl;
+    out << ",\"temperature\":" << dht.getTemperature() << endl;
+    out << ",\"humidity\":" << dht.getHumidity() << endl;
+    out << ",\"ldr\":" << LDRSignal.get() << endl;
+    out << ",\"led\":" << (unsigned) ledCmdSignal.getVal() << endl;
+    out << "}";
+}
+
 void http_status()
 {
     CDBG_FUNK();
@@ -84,27 +93,7 @@ void http_status()
     serverWeb.sendHeader("Content-Type", "application/json", true);
     serverWeb.sendHeader("Cache-Control", "no-cache");
     ostringstream line;
-    line << "{";
-    line << "\"Compiled \":" << __DATE__ << " " << __TIME__ << endl;
-    line << ",\"Serial Speed\":" << SERIAL_BAUND << endl;
-    line << ",\"getResetInfo\":" << getResetInfo().c_str() << endl;
-    line << ",\"RSSI\":" << WiFi.RSSI() << endl;
-
-    const auto local = get_local_time();
-    line << ",\"timeStatus\":" << timeStatus_toStr(timeStatus());
-    line << ",\"time\":" << std::ctime(&local) << endl;
-    line << ",\"Temperature\":" << dht.getTemperature() << endl;
-    line << ",\"Humidity\":" << dht.getHumidity() << endl;
-    line << ",\"LDR\":" << LDRSignal.get() << endl;
-    line << ",\"DEBUG_STREAM\":";
-#ifdef DEBUG_STREAM
-    line << true;
-#else
-        line<< false;
-#endif
-    line << endl;
-    //---------------
-    line << "}";
+    get_status(line);
     serverWeb.sendContent(line.str().c_str());
     serverWeb.sendContent("");
 }
@@ -211,7 +200,7 @@ void setup() {
 
     Serial.begin(SERIAL_BAUND);
     CDBG_FUNK();
-    std::cout << "is_safe_mobe=" << is_safe_mobe << endl;
+    DBG_OUT << "is_safe_mobe=" << is_safe_mobe << endl;
     hw_info(cout);
     LittleFS.begin();
     if (!config.setup() || is_safe_mobe) {
@@ -226,13 +215,15 @@ void setup() {
         cout << "matrix.setIntensity=" << level << endl;
     }
     );
+    ledCmdSignal.onSignal([&](const uint16_t val) {
+        mqtt_send();
+    });
     LDRSignal.begin();
 
     LittleFS_info(cout);
     setup_matrix();
 
-    mqtt.setClientID(config.getDeviceName());
-    mqtt.setup(config.getMqttServer(), config.getMqttPort());
+    mqtt.setup(config.getMqttServer(), config.getMqttPort(), config.getDeviceName());
 //--------------
 
     ntpTime.init();
@@ -246,53 +237,30 @@ void setup() {
     matrix.print("--:--");
     matrix.write();
     setup_WIFIConnect();
-    cout << "Setup done" << endl;
+    DBG_OUT << "Setup done" << endl;
+}
+
+static long nextMsgMQTT = 0;
+void mqtt_send() {
+    nextMsgMQTT = millis() + config.getMqttPeriod();
+
+    string topic = "stat/";
+    topic += config.getDeviceName();
+    DBG_OUT << "MQTT update " << topic << endl;
+    ostringstream payload;
+    get_status(payload);
+    mqtt.publish(topic.c_str(), payload.str().c_str());
 }
 
 void mqtt_loop() {
     if (WL_CONNECTED != WiFi.status()) {
         return;
     }
-
-    const auto now = millis();
     mqtt.loop();
-    static long nextMsgMQTT = 0;
-    if (now < nextMsgMQTT) {
-        return;
+
+    if (millis() >= nextMsgMQTT) {
+        mqtt_send();
     }
-
-    const auto dht_readTemperature = dht.getTemperature();
-    const auto dht_readHumidity = dht.getHumidity();
-    Serial.print("t=");
-    Serial.print(dht_readTemperature);
-    Serial.print(" h=");
-    Serial.println(dht_readTemperature);
-
-    if (isnan(dht_readTemperature) || isnan(dht_readHumidity)) {
-        Serial.println("Failed to read from sensor!");
-        nextMsgMQTT = now + 5 * 1000;
-        return;
-    }
-
-    nextMsgMQTT = now + MQTT_REFRESH_PERIOD;
-
-    String topic;
-
-    topic = "channels/" + String(House_channelID) + "/publish/"
-            + House_Write_API_Key;
-    String data;
-    data = "field" + String(MQTT_TEMPERATURE) + "="
-            + String(dht_readTemperature, 1);
-    data += "&field" + String(MQTT_HUMIDITY) + "="
-            + String(dht_readHumidity, 1);
-#ifndef DEBUG
-    mqtt.publish(topic, data);
-#endif
-    Serial.print("topic= ");
-    Serial.print(topic);
-    Serial.print(" [");
-    Serial.print(data);
-    Serial.println("]");
 }
 
 void time_loop() {

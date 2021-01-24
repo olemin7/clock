@@ -24,7 +24,7 @@ bool CConfig::setup() {
     bool isOk = true;
     const auto keys = vector<string> { "DEVICE_NAME",
             "MQTT_SERVER", "MQTT_PORT",
-            "OTA_USERNAME", "OTA_PASSWORD" };
+            "OTA_USERNAME", "OTA_PASSWORD", "LED_MATRIX_ROTATION", "MQTT_PERIOD" };
     for (const auto &key : keys) {
         if (!json_config.containsKey(key.c_str())) {
             isOk = false;
@@ -44,8 +44,10 @@ void CConfig::setDefault() {
     json_config["DEVICE_NAME"] = DEF_DEVICE_NAME;
     json_config["MQTT_SERVER"] = "";
     json_config["MQTT_PORT"] = 0;
+    json_config["MQTT_PERIOD"] = 60 * 1000;
     json_config["OTA_USERNAME"] = "";
     json_config["OTA_PASSWORD"] = "";
+    json_config["LED_MATRIX_ROTATION"] = 0;
 
     DBG_OUT << "default config " << json_config.capacity() << ":" << json_config.memoryUsage() << endl;
     serializeJsonPretty(json_config, Serial);
@@ -67,5 +69,9 @@ const char* CConfig::getOtaUsername() const {
 }
 const char* CConfig::getOtaPassword() const {
     return json_config["OTA_PASSWORD"].as<const char*>();
+}
+
+const int CConfig::getLedMattixRotation() const {
+    return json_config["LED_MATRIX_ROTATION"].as<int>();
 }
 

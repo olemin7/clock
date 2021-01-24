@@ -22,7 +22,11 @@ class CConfig {
     const char* getDeviceName() const;
     const char* getMqttServer() const;
     const int getMqttPort() const;
+    const unsigned long getMqttPeriod() const {
+        return json_config["MQTT_PERIOD"].as<unsigned long>(); //in ms
+    }
     const char* getOtaUsername() const;
     const char* getOtaPassword() const;
+    const int getLedMattixRotation() const;
 };
 extern CConfig config;
