@@ -77,12 +77,12 @@ void get_status(ostream &out) {
     out << "{";
     out << "\"getResetInfo\":" << system_get_rst_info()->reason << endl;
     const auto local = get_local_time();
-    out << ",\"timeStatus\":" << timeStatus_toStr(timeStatus()) << endl;
+    out << ",\"timeStatus\":" << static_cast<unsigned>(timeStatus()) << endl;
     out << ",\"time\":" << std::ctime(&local) << endl;
     out << ",\"temperature\":" << dht.getTemperature() << endl;
     out << ",\"humidity\":" << dht.getHumidity() << endl;
     out << ",\"ldr\":" << LDRSignal.get() << endl;
-    out << ",\"led\":" << (unsigned) ledCmdSignal.getVal() << endl;
+    out << ",\"led\":" << static_cast<unsigned>(ledCmdSignal.getVal()) << endl;
     out << "}";
 }
 
@@ -224,6 +224,20 @@ void setup() {
     setup_matrix();
 
     mqtt.setup(config.getMqttServer(), config.getMqttPort(), config.getDeviceName());
+    string topic = "cmd/";
+    topic += config.getDeviceName();
+    mqtt.callback(topic, [](char *topic, byte *payload, unsigned int length) {
+        DBG_OUT << "topic:" << topic;
+        auto tt = reinterpret_cast<const char*>(payload);
+        auto i = length;
+        while (i--) {
+            DBG_OUT << *tt;
+            tt++;
+        };
+
+        DBG_OUT << endl;
+
+    });
 //--------------
 
     ntpTime.init();
