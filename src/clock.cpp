@@ -51,7 +51,6 @@ DHTesp dht;
 ESP8266WebServer serverWeb(SERVER_PORT_WEB);
 CMQTT mqtt;
 ESP8266HTTPUpdateServer otaUpdater;
-
 CWifiStateSignal wifiStateSignal;
 
 void setup_matrix() {
@@ -226,17 +225,25 @@ void setup() {
     mqtt.setup(config.getMqttServer(), config.getMqttPort(), config.getDeviceName());
     string topic = "cmd/";
     topic += config.getDeviceName();
+
     mqtt.callback(topic, [](char *topic, byte *payload, unsigned int length) {
-        DBG_OUT << "topic:" << topic;
+        DBG_OUT << "MQTT>>[" << topic << "]:";
         auto tt = reinterpret_cast<const char*>(payload);
         auto i = length;
         while (i--) {
             DBG_OUT << *tt;
             tt++;
         };
-
         DBG_OUT << endl;
-
+        StaticJsonDocument<512> json_cmd;
+        DeserializationError error = deserializeJson(json_cmd, payload, length);
+        if (error) {
+            DBG_OUT << "Failed to read file, using default configuration" << endl;
+        } else {
+            if (json_cmd.containsKey("led")) {
+                ledCmdSignal.set(json_cmd["led"]);
+            }
+        }
     });
 //--------------
 
@@ -260,9 +267,9 @@ void mqtt_send() {
 
     string topic = "stat/";
     topic += config.getDeviceName();
-    DBG_OUT << "MQTT update " << topic << endl;
     ostringstream payload;
     get_status(payload);
+    DBG_OUT << "MQTT<<[" << topic << "]:" << payload.str() << endl;
     mqtt.publish(topic.c_str(), payload.str().c_str());
 }
 
