@@ -150,10 +150,16 @@ void setup_WebPages() {
     serverWeb.on("/get_rc_val", [&]() {
         DBG_PRINTLN("get_rc_val ");
         uint64_t val;
-        if (false == IRSignal.getExclusive(val)) {
+        const auto ledpre = ledCmdSignal.getVal();
+        if (false == IRSignal.getExclusive(val, 5000, []() {
+            ledCmdSignal.toggle(0);
+        })
+        ) {
+            ledCmdSignal.set(ledpre);
             webRetResult(serverWeb, er_timeout);
             return;
         }
+        ledCmdSignal.set(ledpre);
 
         serverWeb.setContentLength(CONTENT_LENGTH_UNKNOWN);
         serverWeb.sendHeader("Content-Type", "application/json", true);
@@ -164,7 +170,8 @@ void setup_WebPages() {
         line << "}";
         serverWeb.sendContent(line.str().c_str());
         serverWeb.sendContent("");
-    });
+    }
+    );
 
     serverWeb.serveStatic("/", LittleFS, "/www/");
     serverWeb.onNotFound([] {
@@ -193,9 +200,7 @@ void setup_WIFIConnect() {
 }
 
 void setup() {
-    pinMode(LED_BUILTIN, OUTPUT);
     is_safe_mobe = isSafeMode(GPIO_PIN_WALL_SWITCH, 3000);
-//pinMode(DHTPin, INPUT); setted in driver
 
     Serial.begin(SERIAL_BAUND);
     CDBG_FUNK();

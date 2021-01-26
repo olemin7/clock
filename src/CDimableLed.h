@@ -32,7 +32,7 @@ class CIRSignal: public SignalLoop<uint64_t> {
     IRrecv irrecv;
     public:
     CIRSignal();
-    bool getExclusive(uint64_t &val, const uint32_t timeout = 5000);
+    bool getExclusive(uint64_t &val, const uint32_t timeout, std::function<void(void)> blink);
     void begin() override;
     void loop() override;
 };

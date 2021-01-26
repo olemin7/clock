@@ -9,6 +9,7 @@
 #include <sdios.h>
 #include <iostream>
 #include <ostream>
+#include <Arduino.h>
 
 #define DEBUG_STREAM Serial
 
@@ -30,14 +31,14 @@ extern std::ostream null_stream;
 
 class Cdbg_funk
 {
-    const char *m_func;
+    const String m_funcName;
     public:
     Cdbg_funk(const char *file, const char *func) :
-            m_func(func) {
-        DBG_OUT << ">>enter func:" << FPSTR(m_func) << std::endl;
+            m_funcName(FPSTR(func)) {
+        DBG_OUT << ">>enter func:" << m_funcName.c_str() << std::endl;
     }
     ~Cdbg_funk() {
-        DBG_OUT << "<<exit func:" << FPSTR(m_func) << std::endl;
+        DBG_OUT << "<<exit func:" << m_funcName.c_str() << std::endl;
     }
 };
 

@@ -9,6 +9,8 @@
 #include <iostream>
 #include "./libs/logs.h"
 #include "./libs/TimeLib.h"
+#include "./libs/misk.h"
+
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
 #include <LittleFS.h>
@@ -27,15 +29,24 @@ CIRSignal::CIRSignal() :
 }
 ;
 
-bool CIRSignal::getExclusive(uint64_t &val, const uint32_t timeout) {
+bool CIRSignal::getExclusive(uint64_t &val, const uint32_t timeout, std::function<void(void)> blink) {
+    CDBG_FUNK();
     const auto wait = millis() + timeout;
     decode_results results;
-    while (wait > millis()) {
+    unsigned long blink_timeout = 0;
+    while (1) {
         if (irrecv.decode(&results)) {  // We have captured something.
             irrecv.resume();
-            cout << "excl IR =" << std::hex << results.value << endl;
+            DBG_OUT << "excl IR =" << std::hex << results.value << std::dec<< endl;
             val = results.value;
             return true;
+        }
+        const auto cur = millis();
+        if (wait < cur)
+            break;
+        if (blink_timeout < cur) {
+            blink_timeout = cur + 300;
+            blink();
         }
         yield();
     }
