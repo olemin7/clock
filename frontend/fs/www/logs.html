@@ -4,7 +4,8 @@
 
     <script>
 
-    function onIndexLoad(status){
+    function onIndexLoad(){
+        logs_on_load();
     }
 
     </script>
@@ -12,6 +13,7 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="js/icons.js"></script>
     <script src="js/http.js"></script>
+    <script src="js/logs.js"></script>
     <script src="js/misk.js"></script>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
@@ -51,12 +53,16 @@
 <div class="Card">
     <div class="card-header"> logs
         <div class="float-end">
-            <button type="button" id="id_cancel" class="btn btn-outline-primary" onclick="preset_cancel()">Clean</button>
+            <label class="btn btn-secondary">
+                <input type="checkbox" onclick=" logs_autoscroll()" id="id_logs_autoscroll" checked/>
+                <span >Autoscroll</span>
+            </label>
+            <button type="button" class="btn btn-outline-primary" onclick="logs_Clear()">Clear</button>
         </div>
     </div>
-        <div class="card-body">
-             <div class="d-grid gap-2" id="preset" ></div>
-        </div>
+    <div class="card-body" id="command-body">
+        <pre id="log_content" style="min-height: 350px; max-height: 350px;"> </pre>
+    </div>
 </div>
 
 <!-- -->

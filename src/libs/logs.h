@@ -15,6 +15,7 @@
 
 #define DEBUG_BUFFER 1024
 
+extern std::string log_buffer;
 extern std::ostream log_stream;
 
 std::string get_log_stream();
@@ -46,6 +47,7 @@ public:
         level--;
     }
 };
+void logs_begin();
 
 #define CDBG_FUNK() Cdbg_scope dbg_scope(__FILE__,__PRETTY_FUNCTION__)
 #define DBG_PRINT(...)       { Serial.print(__VA_ARGS__); }

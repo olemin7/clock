@@ -84,11 +84,14 @@ te_ret get_about(ostream &out) {
 te_ret get_status(ostream &out) {
     const auto local = get_local_time();
     out << "{\"timeStatus\":" << static_cast<unsigned>(timeStatus());
-    out << ",\"time\":\"" << std::ctime(&local) << "\"";
-    const auto temp = dht.getTemperature();
-    out << ",\"temperature\":" << isnan(temp) ? "null" : temp;
-    const auto humm = dht.getHumidity()
-    out << ",\"humidity\":" << isnan(humm) ? "null" : humm;
+    auto str_time = string(ctime(&local)); //to remove \n
+
+    out << ",\"time\":\"" << str_time.substr(0, str_time.find_last_of('\n')) << "\"";
+
+    out << ",\"temperature\":";
+    toJson(out, dht.getTemperature());
+    out << ",\"humidity\":";
+    toJson(out, dht.getHumidity());
     out << ",\"ldr\":" << LDRSignal.get();
     out << ",\"led\":" << static_cast<unsigned>(ledCmdSignal.getVal());
     out << "}";
@@ -153,6 +156,7 @@ void setup_WebPages() {
         }
         webRetResult(serverWeb, ledCmdSignal.onCmd(handler, val) ? er_ok : er_errorResult);
     });
+
     serverWeb.on("/get_rc_val", [&]() {
         DBG_PRINTLN("get_rc_val ");
         uint64_t val;
@@ -167,19 +171,23 @@ void setup_WebPages() {
         }
         ledCmdSignal.set(ledpre);
 
-        serverWeb.setContentLength(CONTENT_LENGTH_UNKNOWN);
-        serverWeb.sendHeader("Content-Type", "application/json", true);
-        serverWeb.sendHeader("Cache-Control", "no-cache");
-        ostringstream line;
-        line << "{\"rc_val\":";
-        line << val;
-        line << "}";
-        serverWeb.sendContent(line.str().c_str());
-        serverWeb.sendContent("");
+        wifiHandle_send_content_json(serverWeb, [=](ostream &out) {
+            out << "{\"rc_val\":";
+            out << val;
+            out << "}";
+            return er_ok;
+        });
     }
     );
 
+    serverWeb.on("/getlogs", HTTP_ANY,
+            [&]() {
+                serverWeb.send(200, "text/plain", log_buffer.c_str());
+                log_buffer = "";
+            });
+
     serverWeb.serveStatic("/", LittleFS, "/www/");
+
     serverWeb.onNotFound([] {
         Serial.println("Error no handler");
         Serial.println(serverWeb.uri());
@@ -209,6 +217,7 @@ void setup() {
     is_safe_mobe = isSafeMode(GPIO_PIN_WALL_SWITCH, 3000);
 
     Serial.begin(SERIAL_BAUND);
+    logs_begin();
     CDBG_FUNK();
     DBG_OUT << "is_safe_mobe=" << is_safe_mobe << endl;
     hw_info(cout);

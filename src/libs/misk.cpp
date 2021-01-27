@@ -9,11 +9,21 @@
 #include "LittleFS.h"
 #include <stdio.h>
 #include <sstream>
+#include <cmath>
+#include "user_interface.h"
 using namespace std;
 
 ostream& operator<<(ostream &os, const String &str) {
     os << str.c_str();
     return os;
+}
+
+void toJson(std::ostream &os, const float &var) {
+    if (isnan(var)) {
+        os << "null";
+    } else {
+        os << var;
+    }
 }
 
 std::string timeStatus_toStr(const timeStatus_t &state) {
@@ -180,8 +190,8 @@ bool isExtMach(const std::string &name, const std::string &ext)
     }
     return true;
 }
-std::string getResetInfo() {
-    std::ostringstream info;
+string getResetInfo() {
+    ostringstream info;
     const auto rst_info = system_get_rst_info();
     info << "rst_info " << rst_info->reason << ":";
     switch (rst_info->reason) {
@@ -223,7 +233,7 @@ std::string getResetInfo() {
         info << ",epc3=" << std::hex << rst_info->epc3;
         info << ",excvaddr=" << std::hex << rst_info->excvaddr;
         info << ",depc=" << std::hex << rst_info->depc;
-        //The   address of  the last    crash   is  printed,    which   is  used    to debug garbled output.
+//The   address of  the last    crash   is  printed,    which   is  used    to debug garbled output.
     }
     info << std::endl;
     return info.str();

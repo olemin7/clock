@@ -7,6 +7,8 @@
 	{"entry":"/restart"					,"inline":"","type":"text/html"},
 	{"entry":"/about"					,"inline":"{\"firmware\":\"clock Jan 27 2021 14:46:41\",\"deviceName\":\"clock\",\"resetInfo\":6}","type":"application/json"},
 	{"entry":"/status"				    ,"inline":"{\"timeStatus\":0,\"time\":\"Thu Jan  1 02:00:34 1970\",\"temperature\":null,\"humidity\":null,\"ldr\":2,\"led\":0}","type":"application/json"},
+	{"entry":"/getlogs"					,"inline":"1231312321323\n",	"type":"text/plain"},
+
 {}
 ]
 }

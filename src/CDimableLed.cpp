@@ -213,7 +213,7 @@ void CDimableLed::setup() {
     pinMode(GPIO_POUT_LED, OUTPUT);
 
     ledCmdSignal.onSignal([](const uint8_t val) {
-        DBG_OUT << "DIMABLE_LED_VAL=" << val << endl;
+        DBG_OUT << "DIMABLE_LED_VAL=" << (unsigned) val << endl;
         if (0 == val) {
             digitalWrite(GPIO_POUT_LED, 0);
         } else if (100 <= val) {

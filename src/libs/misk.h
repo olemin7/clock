@@ -6,14 +6,16 @@
  */
 
 #pragma once
+#include <Arduino.h>
 #include <stdint.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <string>
 #include <ostream>
 #include "./libs/TimeLib.h"
 
 std::ostream& operator<<(std::ostream &os, const String &str);
+//set nan as null
+void toJson(std::ostream &os, const float &var);
+
 std::string timeStatus_toStr(const timeStatus_t&);
 
 void LED_ON();
