@@ -5,5 +5,16 @@
  *      Author: ominenko
  */
 #include "logs.h"
-NullBuffer null_buffer;
-std::ostream null_stream(&null_buffer);
+unsigned int Cdbg_scope::level = 0;
+
+class CLogBuffer: public std::streambuf
+{
+public:
+    int overflow(int c) override {
+        Serial.print(static_cast<char>(c));
+        return c;
+    }
+};
+
+CLogBuffer log_buffer;
+std::ostream log_stream(&log_buffer);

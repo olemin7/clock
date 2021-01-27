@@ -28,7 +28,7 @@ protected:
         m_cb_topic = std::move(topic);
     }
     void loop();
-    bool publish(const String &topic, const String &message);
+    bool publish(const std::string &topic, const std::string &message);
 };
 
 #endif /* CLOCK_CMQTT_H_ */

@@ -37,7 +37,7 @@ bool CIRSignal::getExclusive(uint64_t &val, const uint32_t timeout, std::functio
     while (1) {
         if (irrecv.decode(&results)) {  // We have captured something.
             irrecv.resume();
-            DBG_OUT << "excl IR =" << std::hex << results.value << std::dec<< endl;
+            DBG_OUT << "excl IR =" << std::hex << results.value << std::dec << endl;
             val = results.value;
             return true;
         }
@@ -88,6 +88,7 @@ bool CWallSwitchSignal::getValue() {
 }
 
 void CWallSwitchSignal::begin() {
+    CDBG_FUNK();
     pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
     SignalChange<bool>::begin();
     preVal_ = false;
@@ -121,7 +122,7 @@ std::map<uint64_t, pair<string, int32_t>> json_get_ir_cmd_map() {
         auto cmdFile = LittleFS.open(JSON_FILE_PRESET_CMD, "r");
         StaticJsonDocument<512> preset_cmd;
         DeserializationError error = deserializeJson(preset_cmd, cmdFile);
-        cout << "preset_cmd " << preset_cmd.capacity() << ":" << preset_cmd.memoryUsage() << endl;
+        DBG_OUT << "preset_cmd " << preset_cmd.capacity() << ":" << preset_cmd.memoryUsage() << endl;
         if (error) {
             Serial.println(F("Failed to read file, using default configuration"));
             break;
@@ -139,7 +140,7 @@ std::map<uint64_t, pair<string, int32_t>> json_get_ir_cmd_map() {
             Serial.println(F("Failed to read file, using default configuration"));
             break;
         }
-        cout << "preset_rc " << preset_rc.capacity() << ":" << preset_rc.memoryUsage() << endl;
+        DBG_OUT << "preset_rc " << preset_rc.capacity() << ":" << preset_rc.memoryUsage() << endl;
         for (const auto &it : preset_rc["items"].as<JsonArray>()) {
             auto cmd_index = json_get_cmd(cmd_items, it["cmd"].as<const char*>());
             if (cmd_items.end() != cmd_index) {
@@ -155,19 +156,23 @@ std::map<uint64_t, pair<string, int32_t>> json_get_ir_cmd_map() {
     } while (0);
 
     for (const auto &it : data) {
-        cout << it.first << " " << it.second.first << " " << it.second.second << endl;
+        DBG_OUT << it.first << " " << it.second.first << " " << it.second.second << endl;
     }
     return data;
 }
 
 void CLedCmdSignal::begin() {
+    CDBG_FUNK();
     m_ir_cmd = std::move(json_get_ir_cmd_map());
     m_enabled = true;
-    this->notify(m_ledValue);
+    set(0);
 }
 
 void CLedCmdSignal::set(const int32_t val) {
+    CDBG_FUNK();
+    DBG_OUT << "val=" << val << endl;
     m_ledValue = (100 > val) ? val : 100;
+    //todo move to led
     const auto duty = (10 > m_ledValue) ? val : (LED_VAL_MIN + m_ledValue * (LED_VAL_MAX - LED_VAL_MIN) / 100);
     if (m_enabled) {
         this->notify(duty);
@@ -179,7 +184,7 @@ void CLedCmdSignal::toggle(const int32_t val) {
 }
 
 bool CLedCmdSignal::onCmd(const std::string &cmd, const int32_t val) {
-    cout << "cmd=" << cmd << ", val=" << std::hex << val << endl;
+    DBG_OUT << "cmd=" << cmd << ", val=" << std::hex << val << endl;
     const auto it = m_cmd_list.find(cmd);
     if (it != m_cmd_list.end()) {
         it->second(val);
@@ -189,7 +194,7 @@ bool CLedCmdSignal::onCmd(const std::string &cmd, const int32_t val) {
 }
 
 void CLedCmdSignal::onIRcmd(const uint64_t &cmd) {
-    DBG_PRINTLN("onIRcmd");
+    DBG_OUT << "onIRcmd" << endl;
     const auto &it = m_ir_cmd.find(cmd);
     if (it != m_ir_cmd.end()) {
         onCmd(it->second.first, it->second.second);
@@ -197,6 +202,7 @@ void CLedCmdSignal::onIRcmd(const uint64_t &cmd) {
 
 }
 void CLedCmdSignal::onWallcmd(const bool &state) {
+    DBG_OUT << "onWallcmd:" << state << endl;
     onCmd("toggle", 0);
 }
 
@@ -205,10 +211,11 @@ void CLedCmdSignal::onWallcmd(const bool &state) {
  */
 
 void CDimableLed::setup() {
+    CDBG_FUNK();
     pinMode(GPIO_POUT_LED, OUTPUT);
 
     ledCmdSignal.onSignal([](const uint16_t val) {
-        cout << "DIMABLE_LED_VAL=" << val << endl;
+        DBG_OUT << "DIMABLE_LED_VAL=" << val << endl;
         if (0 == val) {
             digitalWrite(GPIO_POUT_LED, 0);
         } else if (LED_VAL_MAX <= val) {

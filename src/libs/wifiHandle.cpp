@@ -22,7 +22,7 @@ wl_status_t CWifiStateSignal::getValue() {
 }
 
 void wifiHandle_sendlist(ESP8266WebServer &server) {
-    DBG_PRINTLN("wifiHandle_sendlist ");
+    CDBG_FUNK();
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
     server.sendHeader("Content-Type", "application/json", true);
     server.sendHeader("Cache-Control", "no-cache");
@@ -57,10 +57,7 @@ void wifiHandle_loop() {
     if (WIFI_STA == WiFi.getMode()) {
         if (WiFi.status() == WL_CONNECTED) {
             showed = true;
-            DBG_PRINT(F( "IP address:"));
-            DBG_PRINT(WiFi.localIP().toString());
-            DBG_PRINT(F(" RSSI: "));
-            DBG_PRINTLN(WiFi.RSSI());
+            DBG_OUT << "IP address:" << WiFi.localIP() << ", RSSI:" << WiFi.RSSI() << endl;
         }
     }
 }
@@ -85,7 +82,7 @@ void wifiHandle_connect(ESP8266WebServer &server, bool pers) {
 
             WiFi.mode(WIFI_AP);
             WiFi.softAP(name, pwd);
-            cout << "start AP=" << name << ", pwd=" << pwd << ",ip:" << WiFi.softAPIP() << endl;
+            DBG_OUT << "start AP=" << name << ", pwd=" << pwd << ",ip:" << WiFi.softAPIP() << endl;
         } else {
             String ssid;
             String pwd = "";
@@ -101,7 +98,7 @@ void wifiHandle_connect(ESP8266WebServer &server, bool pers) {
             webRetResult(server, er_ok);
             WiFi.persistent(pers);
             delay(500);
-            cout << "connecting ssid=" << ssid << ", pwd=" << pwd << ",ip:" << WiFi.softAPIP() << endl;
+            DBG_OUT << "connecting ssid=" << ssid << ", pwd=" << pwd << ",ip:" << WiFi.softAPIP() << endl;
             WiFi.mode(WIFI_STA);
             WiFi.begin(ssid.c_str(), pwd.c_str());
         }
@@ -156,8 +153,7 @@ void wifi_status(std::ostream &out) {
             out << ", ip=" << WiFi.localIP();
         }
     } else {
-        out << "(AP), host= " << WiFi.hostname() << ", ip="
-                << WiFi.softAPIP().toString();
+        out << "(AP), host= " << WiFi.hostname() << ", ip=" << WiFi.softAPIP();
     }
     out << endl;
 }

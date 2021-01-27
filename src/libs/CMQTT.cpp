@@ -7,6 +7,9 @@
 
 #include "CMQTT.h"
 #include "logs.h"
+#include "wifiHandle.h"
+#include <sstream>
+using namespace std;
 
 CMQTT::CMQTT() :
         client(espClient), m_ClientID("ESP8266Client" __DATE__ __TIME__) {
@@ -35,8 +38,9 @@ void CMQTT::reconnect() {
     // Attempt to connect
     if (client.connect(m_ClientID)) {
         DBG_OUT << "connected" << std::endl;
-        // Once connected, publish an announcement...
-        client.publish("general", "connected");
+        ostringstream line;
+        line << "{\"name\":" << m_ClientID << ",\"ip\":" << WiFi.localIP() << "}";
+        publish("connected", line.str());
         // ... and resubscribe
         client.subscribe(m_cb_topic.c_str());
     } else {
@@ -44,7 +48,7 @@ void CMQTT::reconnect() {
     }
     reconnectTimeOut = now + recconectTimeOut;
 }
-bool CMQTT::publish(const String &topic, const String &message) {
+bool CMQTT::publish(const string &topic, const string &message) {
     return client.publish(topic.c_str(), message.c_str());
 }
 

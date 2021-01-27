@@ -13,45 +13,41 @@
 
 #define DEBUG_STREAM Serial
 
-class NullBuffer: public std::streambuf
-{
-public:
-    int overflow(int c) {
-        return c;
-    }
-};
+#define DEBUG_BUFFER 1024
 
-extern std::ostream null_stream;
+extern std::ostream log_stream;
 
-#ifdef DEBUG_STREAM
-#define DBG_OUT std::cout
-#else
-    #define DBG_OUT null_stream
-#endif
+std::string get_log_stream();
 
-class Cdbg_funk
+#define DBG_OUT log_stream
+
+class Cdbg_scope
 {
     const String m_funcName;
-    public:
-    Cdbg_funk(const char *file, const char *func) :
-            m_funcName(FPSTR(func)) {
-        DBG_OUT << ">>enter func:" << m_funcName.c_str() << std::endl;
+    static unsigned int level;
+    void echo_level(char ch) {
+        auto i = level;
+        while (i--) {
+            DBG_OUT << ch;
+        }
     }
-    ~Cdbg_funk() {
-        DBG_OUT << "<<exit func:" << m_funcName.c_str() << std::endl;
+public:
+    Cdbg_scope(const char *file, const char *func) :
+            m_funcName(FPSTR(func)) {
+        level++;
+        DBG_OUT << "in ";
+        echo_level('<');
+        DBG_OUT << m_funcName.c_str() << std::endl;
+    }
+    ~Cdbg_scope() {
+        DBG_OUT << "out";
+        echo_level('>');
+        DBG_OUT << m_funcName.c_str() << std::endl;
+        level--;
     }
 };
 
-#ifdef DEBUG_STREAM
-#define CDBG_FUNK() Cdbg_funk dbg_funk(__FILE__,__FUNCTION__)
+#define CDBG_FUNK() Cdbg_scope dbg_scope(__FILE__,__PRETTY_FUNCTION__)
 #define DBG_PRINT(...)       { Serial.print(__VA_ARGS__); }
 #define DBG_PRINTLN(...)     { Serial.println(__VA_ARGS__); }
-#else
-    #define CDBG_FUNK()
-#define DBG_PRINT(...)       {}
-#define DBG_PRINTLN(...)  {}
-
-#endif
-
-#define DBG_FUNK_LINE()  DBG_OUT<<    FPSTR(__FUNCTION__)<<":"<<FPSTR(__LINE__)<<endl
 

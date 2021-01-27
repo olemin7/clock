@@ -275,7 +275,7 @@ void mqtt_send() {
     ostringstream payload;
     get_status(payload);
     DBG_OUT << "MQTT<<[" << topic << "]:" << payload.str() << endl;
-    mqtt.publish(topic.c_str(), payload.str().c_str());
+    mqtt.publish(topic, payload.str());
 }
 
 void mqtt_loop() {
