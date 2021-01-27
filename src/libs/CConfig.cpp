@@ -14,7 +14,7 @@ using namespace std;
 CConfig config;
 
 bool CConfig::setup() {
-    CDBG_FUNK();
+    DBG_FUNK();
     auto cmdFile = LittleFS.open(JSON_FILE_CONFIG, "r");
     DeserializationError error = deserializeJson(json_config, cmdFile);
     if (error) {

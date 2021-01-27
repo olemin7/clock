@@ -19,8 +19,7 @@ ostream& operator<<(ostream &os, const IPAddress &ip) {
 
 void webRetResult(ESP8266WebServer &server, te_ret res)
         {
-    DBG_PRINT("Err ");
-    DBG_PRINTLN(res);
+    DBG_OUT << "Err:" << (unsigned) res << endl;
     switch (res) {
         case er_ok:
             server.send(200, "text/plain", "ok");
@@ -65,7 +64,7 @@ wl_status_t CWifiStateSignal::getValue() {
     return WiFi.status();
 }
 void wifiHandle_send_content_json(ESP8266WebServer &server, std::function<te_ret(std::ostream &out)> content) {
-    CDBG_FUNK();
+    DBG_FUNK();
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
     server.sendHeader("Content-Type", "application/json", true);
     server.sendHeader("Cache-Control", "no-cache");
@@ -76,7 +75,7 @@ void wifiHandle_send_content_json(ESP8266WebServer &server, std::function<te_ret
 }
 
 te_ret wifiHandle_sendlist_content(std::ostream &out) {
-    CDBG_FUNK();
+    DBG_FUNK();
 
     out << "{\"AP_LIST\":[";
     const auto count = WiFi.scanNetworks(false, true);
@@ -96,7 +95,7 @@ te_ret wifiHandle_sendlist_content(std::ostream &out) {
 }
 
 void wifiHandle_sendlist(ESP8266WebServer &server) {
-    CDBG_FUNK();
+    DBG_FUNK();
     wifiHandle_send_content_json(server, wifiHandle_sendlist_content);
 }
 
@@ -161,12 +160,7 @@ void wifiHandle_connect(ESP8266WebServer &server, bool pers) {
 void setup_wifi(const String &ssid, const String &pwd, const String &host_name,
         const WiFiMode_t &wifi_mode) {
     // Set hostname first
-    DBG_PRINT(F("hostname:"));
-    DBG_PRINTLN(host_name);
-    DBG_PRINT(F("pwd: "));
-    DBG_PRINTLN(pwd);
-    DBG_PRINT(F("Mode: "));
-    DBG_PRINTLN(WiFi.getPhyMode())
+    DBG_OUT << "hostname:" << host_name << ",pwd:" << pwd << ",Mode:" << WiFi.getPhyMode() << endl;
     WiFi.hostname(host_name);
     // Reduce startup surge current
     WiFi.setAutoConnect(true);

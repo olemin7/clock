@@ -116,7 +116,7 @@ void setup_WebPages() {
     });
 
     serverWeb.on("/filesave", []() {
-        DBG_PRINTLN("filesave");
+        DBG_FUNK();
         if (!serverWeb.hasArg("path") || !serverWeb.hasArg("payload")) {
             webRetResult(serverWeb, er_no_parameters);
             return;
@@ -158,7 +158,7 @@ void setup_WebPages() {
     });
 
     serverWeb.on("/get_rc_val", [&]() {
-        DBG_PRINTLN("get_rc_val ");
+        DBG_FUNK();
         uint64_t val;
         const auto ledpre = ledCmdSignal.getVal();
         if (false == IRSignal.getExclusive(val, 5000, []() {
@@ -218,7 +218,7 @@ void setup() {
 
     Serial.begin(SERIAL_BAUND);
     logs_begin();
-    CDBG_FUNK();
+    DBG_FUNK();
     DBG_OUT << "is_safe_mobe=" << is_safe_mobe << endl;
     hw_info(cout);
     LittleFS.begin();

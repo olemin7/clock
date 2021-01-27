@@ -49,7 +49,5 @@ public:
 };
 void logs_begin();
 
-#define CDBG_FUNK() Cdbg_scope dbg_scope(__FILE__,__PRETTY_FUNCTION__)
-#define DBG_PRINT(...)       { Serial.print(__VA_ARGS__); }
-#define DBG_PRINTLN(...)     { Serial.println(__VA_ARGS__); }
+#define DBG_FUNK() Cdbg_scope dbg_scope(__FILE__,__PRETTY_FUNCTION__)
 

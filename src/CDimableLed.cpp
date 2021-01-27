@@ -30,7 +30,7 @@ CIRSignal::CIRSignal() :
 ;
 
 bool CIRSignal::getExclusive(uint64_t &val, const uint32_t timeout, std::function<void(void)> blink) {
-    CDBG_FUNK();
+    DBG_FUNK();
     const auto wait = millis() + timeout;
     decode_results results;
     unsigned long blink_timeout = 0;
@@ -88,7 +88,7 @@ bool CWallSwitchSignal::getValue() {
 }
 
 void CWallSwitchSignal::begin() {
-    CDBG_FUNK();
+    DBG_FUNK();
     pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
     SignalChange<bool>::begin();
     preVal_ = false;
@@ -162,14 +162,14 @@ std::map<uint64_t, pair<string, int32_t>> json_get_ir_cmd_map() {
 }
 
 void CLedCmdSignal::begin() {
-    CDBG_FUNK();
+    DBG_FUNK();
     m_ir_cmd = std::move(json_get_ir_cmd_map());
     m_enabled = true;
     set(0);
 }
 
 void CLedCmdSignal::set(const int32_t val) {
-    CDBG_FUNK();
+    DBG_FUNK();
     DBG_OUT << "val=" << val << endl;
     m_ledValue = std::min(100, val);
     if (m_enabled) {
@@ -209,7 +209,7 @@ void CLedCmdSignal::onWallcmd(const bool &state) {
  */
 
 void CDimableLed::setup() {
-    CDBG_FUNK();
+    DBG_FUNK();
     pinMode(GPIO_POUT_LED, OUTPUT);
 
     ledCmdSignal.onSignal([](const uint8_t val) {
