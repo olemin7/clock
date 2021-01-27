@@ -72,29 +72,27 @@ void setup_matrix() {
     matrix.write();
 }
 
-void get_status(ostream &out) {
+te_ret get_about(ostream &out) {
     out << "{";
-    out << "\"getResetInfo\":" << system_get_rst_info()->reason << endl;
-    const auto local = get_local_time();
-    out << ",\"timeStatus\":" << static_cast<unsigned>(timeStatus()) << endl;
-    out << ",\"time\":" << std::ctime(&local) << endl;
-    out << ",\"temperature\":" << dht.getTemperature() << endl;
-    out << ",\"humidity\":" << dht.getHumidity() << endl;
-    out << ",\"ldr\":" << LDRSignal.get() << endl;
-    out << ",\"led\":" << static_cast<unsigned>(ledCmdSignal.getVal()) << endl;
+    out << "\"firmware\":\"clock " << __DATE__ << " " << __TIME__ << "\"";
+    out << ",\"deviceName\":\"" << config.getDeviceName() << "\"";
+    out << ",\"resetInfo\":" << system_get_rst_info()->reason;
     out << "}";
+    return er_ok;
 }
 
-void http_status()
-{
-    CDBG_FUNK();
-    serverWeb.setContentLength(CONTENT_LENGTH_UNKNOWN);
-    serverWeb.sendHeader("Content-Type", "application/json", true);
-    serverWeb.sendHeader("Cache-Control", "no-cache");
-    ostringstream line;
-    get_status(line);
-    serverWeb.sendContent(line.str().c_str());
-    serverWeb.sendContent("");
+te_ret get_status(ostream &out) {
+    const auto local = get_local_time();
+    out << "{\"timeStatus\":" << static_cast<unsigned>(timeStatus());
+    out << ",\"time\":\"" << std::ctime(&local) << "\"";
+    const auto temp = dht.getTemperature();
+    out << ",\"temperature\":" << isnan(temp) ? "null" : temp;
+    const auto humm = dht.getHumidity()
+    out << ",\"humidity\":" << isnan(humm) ? "null" : humm;
+    out << ",\"ldr\":" << LDRSignal.get();
+    out << ",\"led\":" << static_cast<unsigned>(ledCmdSignal.getVal());
+    out << "}";
+    return er_ok;
 }
 
 void setup_WebPages() {
@@ -105,7 +103,15 @@ void setup_WebPages() {
         delay(1000);
         ESP.restart();
     });
-    serverWeb.on("/status", http_status);
+
+    serverWeb.on("/about", [] {
+        wifiHandle_send_content_json(serverWeb, get_about);
+    });
+
+    serverWeb.on("/status", [] {
+        wifiHandle_send_content_json(serverWeb, get_status);
+    });
+
     serverWeb.on("/filesave", []() {
         DBG_PRINTLN("filesave");
         if (!serverWeb.hasArg("path") || !serverWeb.hasArg("payload")) {

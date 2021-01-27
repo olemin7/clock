@@ -17,38 +17,89 @@ ostream& operator<<(ostream &os, const IPAddress &ip) {
     return os;
 }
 
+void webRetResult(ESP8266WebServer &server, te_ret res)
+        {
+    DBG_PRINT("Err ");
+    DBG_PRINTLN(res);
+    switch (res) {
+        case er_ok:
+            server.send(200, "text/plain", "ok");
+            break;
+        case er_fileNotFound:
+            server.send(404, "text/plain", "FileNotFound");
+            break;
+        case er_openFile:
+            server.send(404, "text/plain", "er_openFile");
+            break;
+        case er_createFile:
+            server.send(500, "text/plain", "er_createFile");
+            break;
+        case er_incorrectMode:
+            server.send(400, "text/plain", "er_incorrectMode");
+            break;
+        case er_no_parameters:
+            server.send(400, "text/plain", "er_no_parameters");
+            break;
+        case er_errorResult:
+            server.send(401, "text/plain", "er_errorResult");
+            break;
+        case er_BuffOverflow:
+            server.send(400, "text/plain", "er_BuffOverflow");
+            break;
+        case err_MarlinRead:
+            server.send(400, "text/plain", "err_MarlinRead");
+            break;
+        case er_FileIO:
+            server.send(400, "text/plain", "er_FileIO");
+            break;
+        case er_timeout:
+            server.send(400, "text/plain", "er_timeout");
+            break;
+        default:
+            server.send(400, "text/plain", "undefined");
+            break;
+    }
+}
+
 wl_status_t CWifiStateSignal::getValue() {
     return WiFi.status();
 }
-
-void wifiHandle_sendlist(ESP8266WebServer &server) {
+void wifiHandle_send_content_json(ESP8266WebServer &server, std::function<te_ret(std::ostream &out)> content) {
     CDBG_FUNK();
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
     server.sendHeader("Content-Type", "application/json", true);
     server.sendHeader("Cache-Control", "no-cache");
-    server.sendContent("{\"AP_LIST\":[");
-    const auto count = WiFi.scanNetworks(false, true);
-    DBG_PRINT("networks ");
-    DBG_PRINTLN(count);
-
-    for (int i = 0; i < count; i++) {
-        ostringstream line;
-        if (i) {
-            line << ",";
-        }
-        line << "{";
-        line << "\"SSID\":\"" << WiFi.SSID(i).c_str() << "\",";
-        line << "\"SIGNAL\":\"" << WiFi.RSSI(i) << "\",";
-        line << "\"IS_PROTECTED\":\""
-                << ((ENC_TYPE_NONE == WiFi.encryptionType(i)) ? 0 : 1) << "\",";
-        line << "\"IS_HIDDEN\":\"" << WiFi.isHidden(i) << "\"";
-        line << "}";
-        DBG_PRINTLN(line.str().c_str());
-        server.sendContent(line.str().c_str());
-    }
-    server.sendContent("]}");
+    ostringstream line;
+    content(line);
+    server.sendContent(line.str().c_str());
     server.sendContent("");
 }
+
+te_ret wifiHandle_sendlist_content(std::ostream &out) {
+    CDBG_FUNK();
+
+    out << "{\"AP_LIST\":[";
+    const auto count = WiFi.scanNetworks(false, true);
+    DBG_OUT << "networks:" << count << endl;
+
+    for (int i = 0; i < count; i++) {
+        if (i) {
+            out << ",";
+        }
+        out << "{\"SSID\":\"" << WiFi.SSID(i).c_str() << "\",";
+        out << "\"SIGNAL\":\"" << WiFi.RSSI(i) << "\",";
+        out << "\"IS_PROTECTED\":\"" << ((ENC_TYPE_NONE == WiFi.encryptionType(i)) ? 0 : 1) << "\",";
+        out << "\"IS_HIDDEN\":\"" << WiFi.isHidden(i) << "\"}";
+    }
+    out << "]}";
+    return er_ok;
+}
+
+void wifiHandle_sendlist(ESP8266WebServer &server) {
+    CDBG_FUNK();
+    wifiHandle_send_content_json(server, wifiHandle_sendlist_content);
+}
+
 static bool showed = false;
 void wifiHandle_loop() {
     if (showed) {

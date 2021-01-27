@@ -171,11 +171,9 @@ void CLedCmdSignal::begin() {
 void CLedCmdSignal::set(const int32_t val) {
     CDBG_FUNK();
     DBG_OUT << "val=" << val << endl;
-    m_ledValue = (100 > val) ? val : 100;
-    //todo move to led
-    const auto duty = (10 > m_ledValue) ? val : (LED_VAL_MIN + m_ledValue * (LED_VAL_MAX - LED_VAL_MIN) / 100);
+    m_ledValue = std::min(100, val);
     if (m_enabled) {
-        this->notify(duty);
+        this->notify(m_ledValue);
     }
 }
 
@@ -214,14 +212,15 @@ void CDimableLed::setup() {
     CDBG_FUNK();
     pinMode(GPIO_POUT_LED, OUTPUT);
 
-    ledCmdSignal.onSignal([](const uint16_t val) {
+    ledCmdSignal.onSignal([](const uint8_t val) {
         DBG_OUT << "DIMABLE_LED_VAL=" << val << endl;
         if (0 == val) {
             digitalWrite(GPIO_POUT_LED, 0);
-        } else if (LED_VAL_MAX <= val) {
+        } else if (100 <= val) {
             digitalWrite(GPIO_POUT_LED, 1);
         } else {
-            analogWrite(GPIO_POUT_LED, val);
+            const auto duty = (10 > val) ? val : (LED_VAL_MIN + val * (LED_VAL_MAX - LED_VAL_MIN) / 100);
+            analogWrite(GPIO_POUT_LED, duty);
         }
     });
     IRSignal.onSignal([](const uint64_t &cmd) {

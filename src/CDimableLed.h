@@ -51,7 +51,7 @@ private:
  *
  */
 
-class CLedCmdSignal: public Signal<uint16_t> {
+class CLedCmdSignal: public Signal<uint8_t> {
     uint8_t m_ledValue;
     std::map<std::string, std::function<void(const int32_t)> > m_cmd_list;
     std::map<uint64_t, pair<string, int32_t>> m_ir_cmd;

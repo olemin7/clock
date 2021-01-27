@@ -158,50 +158,6 @@ void LittleFS_info(std::ostream &out)
     out << "<--LittleFS_info" << endl;
 }
 
-void webRetResult(ESP8266WebServer &server, te_ret res)
-        {
-    DBG_PRINT("Err ");
-    DBG_PRINTLN(res);
-    switch (res) {
-        case er_ok:
-            server.send(200, "text/plain", "ok");
-            break;
-        case er_fileNotFound:
-            server.send(404, "text/plain", "FileNotFound");
-            break;
-        case er_openFile:
-            server.send(404, "text/plain", "er_openFile");
-            break;
-        case er_createFile:
-            server.send(500, "text/plain", "er_createFile");
-            break;
-        case er_incorrectMode:
-            server.send(400, "text/plain", "er_incorrectMode");
-            break;
-        case er_no_parameters:
-            server.send(400, "text/plain", "er_no_parameters");
-            break;
-        case er_errorResult:
-            server.send(401, "text/plain", "er_errorResult");
-            break;
-        case er_BuffOverflow:
-            server.send(400, "text/plain", "er_BuffOverflow");
-            break;
-        case err_MarlinRead:
-            server.send(400, "text/plain", "err_MarlinRead");
-            break;
-        case er_FileIO:
-            server.send(400, "text/plain", "er_FileIO");
-            break;
-        case er_timeout:
-            server.send(400, "text/plain", "er_timeout");
-            break;
-        default:
-            server.send(400, "text/plain", "undefined");
-            break;
-    }
-}
-
 bool isExtMach(const std::string &name, const std::string &ext)
         {
     const auto pos = name.find_last_of('.');
