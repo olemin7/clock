@@ -28,5 +28,11 @@ class CConfig {
     const char* getOtaUsername() const;
     const char* getOtaPassword() const;
     const int getLedMattixRotation() const;
+    const bool getHasIR() const {
+        return json_config["HAS_IR"].as<bool>();
+    }
+    const bool getHasWallSwitch() const {
+        return json_config["HAS_WALLSWITCH"].as<bool>();
+    }
 };
 extern CConfig config;

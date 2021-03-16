@@ -71,8 +71,10 @@ class CLedCmdSignal: public Signal<uint8_t> {
 };
 
 class CDimableLed {
-public:
-    void setup();
+    bool m_hasIR;
+    bool m_hasWallSwitch;
+    public:
+    void setup(bool hasIR = true, bool hasWallSwitch = true);
     void loop();
 };
 

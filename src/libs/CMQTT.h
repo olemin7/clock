@@ -28,6 +28,9 @@ protected:
         m_cb_topic = std::move(topic);
     }
     void loop();
+    bool isConnected() {
+        return client.connected();
+    }
     bool publish(const std::string &topic, const std::string &message);
 };
 

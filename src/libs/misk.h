@@ -10,13 +10,15 @@
 #include <stdint.h>
 #include <string>
 #include <ostream>
-#include "./libs/TimeLib.h"
+#include <TimeLib.h>
 
 std::ostream& operator<<(std::ostream &os, const String &str);
+std::ostream& operator<<(std::ostream &os, const timeStatus_t &state);
 //set nan as null
 void toJson(std::ostream &os, const float &var);
 
-std::string timeStatus_toStr(const timeStatus_t&);
+void toDate(std::ostream &os, const time_t &time); //dd-mm-yyyy
+void toTime(std::ostream &os, const time_t &time); //hh:mm:ss
 
 void LED_ON();
 void LED_OFF();

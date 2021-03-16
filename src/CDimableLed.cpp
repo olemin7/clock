@@ -8,7 +8,7 @@
 #include "CDimableLed.h"
 #include <iostream>
 #include "./libs/logs.h"
-#include "./libs/TimeLib.h"
+#include <TimeLib.h>
 #include "./libs/misk.h"
 
 #define ARDUINOJSON_USE_LONG_LONG 1
@@ -208,8 +208,12 @@ void CLedCmdSignal::onWallcmd(const bool &state) {
  *
  */
 
-void CDimableLed::setup() {
+void CDimableLed::setup(bool hasIR, bool hasWallSwitch) {
     DBG_FUNK();
+    m_hasIR = hasIR;
+    m_hasWallSwitch = hasWallSwitch;
+    DBG_OUT << "m_hasIR:" << m_hasIR << ",m_hasWallSwitch:" << m_hasWallSwitch << endl;
+
     pinMode(GPIO_POUT_LED, OUTPUT);
 
     ledCmdSignal.onSignal([](const uint8_t val) {
@@ -223,19 +227,28 @@ void CDimableLed::setup() {
             analogWrite(GPIO_POUT_LED, duty);
         }
     });
-    IRSignal.onSignal([](const uint64_t &cmd) {
-        ledCmdSignal.onIRcmd(cmd);
-    });
-    WallSwitchSignal.onSignal([](const bool &state) {
-        ledCmdSignal.onWallcmd(state);
-    });
-    IRSignal.begin();
-    WallSwitchSignal.begin();
+    if (m_hasIR) {
+        IRSignal.onSignal([](const uint64_t &cmd) {
+            ledCmdSignal.onIRcmd(cmd);
+        });
+        IRSignal.begin();
+    }
+    if (m_hasWallSwitch) {
+        WallSwitchSignal.onSignal([](const bool &state) {
+            ledCmdSignal.onWallcmd(state);
+        });
+
+        WallSwitchSignal.begin();
+    }
     ledCmdSignal.begin();
 }
 
 void CDimableLed::loop() {
-    IRSignal.loop();
-    WallSwitchSignal.loop();
+    if (m_hasIR) {
+        IRSignal.loop();
+    }
+    if (m_hasWallSwitch) {
+        WallSwitchSignal.loop();
+    }
 }
 

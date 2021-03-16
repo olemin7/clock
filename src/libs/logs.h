@@ -13,7 +13,7 @@
 
 #define DEBUG_STREAM Serial
 
-#define DEBUG_BUFFER 1024
+#define DEBUG_BUFFER 1024*2
 
 extern std::string log_buffer;
 extern std::ostream log_stream;

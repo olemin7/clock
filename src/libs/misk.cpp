@@ -26,17 +26,33 @@ void toJson(std::ostream &os, const float &var) {
     }
 }
 
-std::string timeStatus_toStr(const timeStatus_t &state) {
+ostream& operator<<(ostream &os, const timeStatus_t &state) {
     switch (state) {
         case timeNotSet:
-            return "timeNotSet";
+            os << "timeNotSet";
+            break;
         case timeNeedsSync:
-            return "timeNeedsSync";
+            os << "timeNeedsSync";
+            break;
         case timeSet:
-            return "timeSet";
+            os << "timeSet";
+            break;
         default:
-            return "unknown";
+            os << "unknown";
+            break;
     }
+    return os;
+}
+
+void toDate(std::ostream &os, const time_t &time) {
+    char tt[11];
+    sprintf(tt, "%d-%.02d-%02d", year(time), month(time), day(time));
+    os << tt;
+}
+void toTime(std::ostream &os, const time_t &time) {
+    char tt[9];
+    sprintf(tt, "%d:%.02d:%.02d", hour(time), minute(time), second(time)); //hh:mm:ss
+    os << tt;
 }
 
 void LED_ON()

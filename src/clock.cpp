@@ -16,10 +16,6 @@ Timezone myTZ((TimeChangeRule ) { "DST", Last, Sun, Mar, 3, +3 * 60 },
 time_t get_local_time() {
     return myTZ.toLocal(now());
 }
-void setTime_(const time_t &par) {
-    setTime(par);
-    Serial.println("setTime_");
-}
 
 auto matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
@@ -83,11 +79,12 @@ te_ret get_about(ostream &out) {
 
 te_ret get_status(ostream &out) {
     const auto local = get_local_time();
-    out << "{\"timeStatus\":" << static_cast<unsigned>(timeStatus());
-    auto str_time = string(ctime(&local)); //to remove \n
-
-    out << ",\"time\":\"" << str_time.substr(0, str_time.find_last_of('\n')) << "\"";
-
+    out << "{\"timeStatus\":" << timeStatus();
+    out << ",\"time\":\"";
+    toTime(out, local);
+    out << " ";
+    toDate(out, local);
+    out << "\"";
     out << ",\"temperature\":";
     toJson(out, dht.getTemperature());
     out << ",\"humidity\":";
@@ -225,7 +222,7 @@ void setup() {
     if (!config.setup() || is_safe_mobe) {
         config.setDefault();
     }
-    dimableLed.setup();
+    dimableLed.setup(config.getHasIR(), config.getHasWallSwitch());
     MDNS.addService("http", "tcp", SERVER_PORT_WEB);
     MDNS.begin(config.getDeviceName());
     setup_WebPages();
@@ -263,12 +260,14 @@ void setup() {
             if (json_cmd.containsKey("led")) {
                 ledCmdSignal.set(json_cmd["led"]);
             }
+            if (json_cmd.containsKey("time")) {
+                ledCmdSignal.set(json_cmd["led"]);
+            }
         }
     });
 //--------------
 
     ntpTime.init();
-    ntpTime.setCallback(setTime_);
 //------------------
     dht.setup(DHTPin, DHTesp::DHT22);
 //-----------------
@@ -281,16 +280,20 @@ void setup() {
     DBG_OUT << "Setup done" << endl;
 }
 
-static long nextMsgMQTT = 0;
-void mqtt_send() {
-    nextMsgMQTT = millis() + config.getMqttPeriod();
+static unsigned long nextMsgMQTT = 0;
 
-    string topic = "stat/";
-    topic += config.getDeviceName();
-    ostringstream payload;
-    get_status(payload);
-    DBG_OUT << "MQTT<<[" << topic << "]:" << payload.str() << endl;
-    mqtt.publish(topic, payload.str());
+void mqtt_send() {
+    if (mqtt.isConnected()) {
+        nextMsgMQTT = millis() + config.getMqttPeriod();
+        string topic = "stat/";
+        topic += config.getDeviceName();
+        ostringstream payload;
+        get_status(payload);
+        DBG_OUT << "MQTT<<[" << topic << "]:" << payload.str() << endl;
+        mqtt.publish(topic, payload.str());
+    } else {
+        nextMsgMQTT = 0; //force to send after connection
+    }
 }
 
 void mqtt_loop() {
@@ -299,9 +302,10 @@ void mqtt_loop() {
     }
     mqtt.loop();
 
-    if (millis() >= nextMsgMQTT) {
+    if (millis() >= nextMsgMQTT) { //send
         mqtt_send();
     }
+
 }
 
 void time_loop() {
