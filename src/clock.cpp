@@ -8,14 +8,10 @@ constexpr auto numberOfVerticalDisplays = 1;
 constexpr auto DHTPin = D4;
 
 const char *update_path = "/firmware";
-bool is_safe_mobe = false;
+bool is_safe_mode = false;
 
 Timezone myTZ((TimeChangeRule ) { "DST", Last, Sun, Mar, 3, +3 * 60 },
         (TimeChangeRule ) { "STD", Last, Sun, Oct, 4, +2 * 60 });
-
-time_t get_local_time() {
-    return myTZ.toLocal(now());
-}
 
 auto matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
@@ -41,6 +37,12 @@ public:
         return ldr.get();
     }
 } LDRSignal;
+
+class CTimeKeeper: public SignalChange<time_t> {
+    time_t getValue() {
+        return myTZ.toLocal(now());
+    }
+} timeKeeper;
 
 DHTesp dht;
 
@@ -78,7 +80,7 @@ te_ret get_about(ostream &out) {
 }
 
 te_ret get_status(ostream &out) {
-    const auto local = get_local_time();
+    const auto local = timeKeeper.getSavedValue();
     out << "{\"timeStatus\":" << timeStatus();
     out << ",\"time\":\"";
     toTime(out, local);
@@ -91,11 +93,13 @@ te_ret get_status(ostream &out) {
     toJson(out, dht.getHumidity());
     out << ",\"ldr\":" << LDRSignal.get();
     out << ",\"led\":" << static_cast<unsigned>(ledCmdSignal.getVal());
+    out << ",\"mqtt\":" << mqtt.isConnected();
     out << "}";
     return er_ok;
 }
 
 void setup_WebPages() {
+    DBG_FUNK();
     otaUpdater.setup(&serverWeb, update_path, config.getOtaUsername(), config.getOtaPassword());
 
     serverWeb.on("/restart", []() {
@@ -153,35 +157,41 @@ void setup_WebPages() {
         }
         webRetResult(serverWeb, ledCmdSignal.onCmd(handler, val) ? er_ok : er_errorResult);
     });
-
-    serverWeb.on("/get_rc_val", [&]() {
-        DBG_FUNK();
-        uint64_t val;
-        const auto ledpre = ledCmdSignal.getVal();
-        if (false == IRSignal.getExclusive(val, 5000, []() {
-            ledCmdSignal.toggle(0);
-        })
-        ) {
+    if (config.getHasIR()) {
+        serverWeb.on("/get_rc_val", [&]() {
+            DBG_FUNK();
+            uint64_t val;
+            const auto ledpre = ledCmdSignal.getVal();
+            if (false == IRSignal.getExclusive(val, 5000, []() {
+                ledCmdSignal.toggle(0);
+            })
+            ) {
+                ledCmdSignal.set(ledpre);
+                webRetResult(serverWeb, er_timeout);
+                return;
+            }
             ledCmdSignal.set(ledpre);
-            webRetResult(serverWeb, er_timeout);
-            return;
-        }
-        ledCmdSignal.set(ledpre);
 
-        wifiHandle_send_content_json(serverWeb, [=](ostream &out) {
-            out << "{\"rc_val\":";
-            out << val;
-            out << "}";
-            return er_ok;
-        });
+            wifiHandle_send_content_json(serverWeb, [=](ostream &out) {
+                out << "{\"rc_val\":";
+                out << val;
+                out << "}";
+                return er_ok;
+            });
+        }
+        );
     }
-    );
 
     serverWeb.on("/getlogs", HTTP_ANY,
             [&]() {
                 serverWeb.send(200, "text/plain", log_buffer.c_str());
                 log_buffer = "";
             });
+
+    serverWeb.on("/set_time", [&]() {
+        DBG_FUNK();
+        //todo
+    });
 
     serverWeb.serveStatic("/", LittleFS, "/www/");
 
@@ -194,13 +204,14 @@ void setup_WebPages() {
 }
 
 void setup_WIFIConnect() {
+    DBG_FUNK();
     WiFi.begin();
     wifiStateSignal.onSignal([](const wl_status_t &status) {
         wifi_status(cout);
     }
     );
     wifiStateSignal.begin();
-    if (is_safe_mobe) {
+    if (is_safe_mode) {
         WiFi.persistent(false);
         WiFi.mode(WIFI_AP);
         WiFi.softAP(config.getDeviceName(), DEF_AP_PWD);
@@ -210,22 +221,8 @@ void setup_WIFIConnect() {
     }
 }
 
-void setup() {
-    is_safe_mobe = isSafeMode(GPIO_PIN_WALL_SWITCH, 3000);
-
-    Serial.begin(SERIAL_BAUND);
-    logs_begin();
+void setup_signals() {
     DBG_FUNK();
-    DBG_OUT << "is_safe_mobe=" << is_safe_mobe << endl;
-    hw_info(cout);
-    LittleFS.begin();
-    if (!config.setup() || is_safe_mobe) {
-        config.setDefault();
-    }
-    dimableLed.setup(config.getHasIR(), config.getHasWallSwitch());
-    MDNS.addService("http", "tcp", SERVER_PORT_WEB);
-    MDNS.begin(config.getDeviceName());
-    setup_WebPages();
     LDRSignal.onSignal([](const uint8_t &level) {
         matrix.setIntensity(level);
         cout << "matrix.setIntensity=" << level << endl;
@@ -234,11 +231,30 @@ void setup() {
     ledCmdSignal.onSignal([&](const uint16_t val) {
         mqtt_send();
     });
+
+    timeKeeper.onSignal([](const time_t &time) {
+        if (timeNotSet == timeStatus()) {
+            return;
+        }
+        static auto preMinute = static_cast<uint8_t>(0xff);
+        const auto curMinute = minute(time);
+        if (curMinute == preMinute) {
+            return;
+        }
+        preMinute = curMinute;
+        matrix.fillScreen(LOW);
+        matrix.setCursor(0, 7);
+        char buffMin[6];
+        sprintf_P(buffMin, "%2u:%02u", hour(time), curMinute);
+        matrix.print(buffMin);
+        matrix.write();
+    });
     LDRSignal.begin();
+    timeKeeper.begin();
+}
 
-    LittleFS_info(cout);
-    setup_matrix();
-
+void setup_mqtt() {
+    DBG_FUNK();
     mqtt.setup(config.getMqttServer(), config.getMqttPort(), config.getDeviceName());
     string topic = "cmd/";
     topic += config.getDeviceName();
@@ -265,13 +281,34 @@ void setup() {
             }
         }
     });
-//--------------
+}
+
+void setup() {
+    is_safe_mode = isSafeMode(GPIO_PIN_WALL_SWITCH, 3000);
+
+    Serial.begin(SERIAL_BAUND);
+    logs_begin();
+    DBG_FUNK();
+    DBG_OUT << "is_safe_mode=" << is_safe_mode << endl;
+    hw_info(cout);
+    LittleFS.begin();
+    if (!config.setup() || is_safe_mode) {
+        config.setDefault();
+    }
+    dimableLed.setup(config.getHasIR(), config.getHasWallSwitch());
+    MDNS.addService("http", "tcp", SERVER_PORT_WEB);
+    MDNS.begin(config.getDeviceName());
+    setup_WebPages();
+    setup_signals();
+
+    LittleFS_info(cout);
+    setup_matrix();
+    setup_mqtt();
 
     ntpTime.init();
 //------------------
     dht.setup(DHTPin, DHTesp::DHT22);
 //-----------------
-
     matrix.fillScreen(LOW);
     matrix.setCursor(0, 7);
     matrix.print("--:--");
@@ -308,31 +345,12 @@ void mqtt_loop() {
 
 }
 
-void time_loop() {
-    if (timeNotSet == timeStatus()) {
-        return;
-    }
-    const auto local = get_local_time();
-    static auto preMinute = static_cast<uint8_t>(0xff);
-    const auto curMinute = minute(local);
-    if (curMinute == preMinute) {
-        return;
-    }
-    preMinute = curMinute;
-    matrix.fillScreen(LOW);
-    matrix.setCursor(0, 7);
-    char buffMin[6];
-    sprintf_P(buffMin, "%2u:%02u", hour(local), curMinute);
-    matrix.print(buffMin);
-    matrix.write();
-}
-
 void loop() {
     wifiStateSignal.loop();
     mqtt_loop();
     ntpTime.loop();
-    time_loop();
     dimableLed.loop();
     LDRSignal.loop();
+    timeKeeper.loop();
     serverWeb.handleClient();
 }

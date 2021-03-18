@@ -26,22 +26,21 @@ class Cdbg_scope
 {
     const String m_funcName;
     static unsigned int level;
-    void echo_level(char ch) {
+
+public:
+    Cdbg_scope(const char *file, const char *func) :
+            m_funcName(FPSTR(func)) {
+        level++;
+        echo_level('<');
+        DBG_OUT << m_funcName.c_str() << std::endl;
+    }
+    static void echo_level(char ch) {
         auto i = level;
         while (i--) {
             DBG_OUT << ch;
         }
     }
-public:
-    Cdbg_scope(const char *file, const char *func) :
-            m_funcName(FPSTR(func)) {
-        level++;
-        DBG_OUT << "in ";
-        echo_level('<');
-        DBG_OUT << m_funcName.c_str() << std::endl;
-    }
     ~Cdbg_scope() {
-        DBG_OUT << "out";
         echo_level('>');
         DBG_OUT << m_funcName.c_str() << std::endl;
         level--;
