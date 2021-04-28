@@ -24,7 +24,8 @@ bool CConfig::setup() {
     bool isOk = true;
     const auto keys = vector<string> { "DEVICE_NAME",
             "MQTT_SERVER", "MQTT_PORT",
-            "OTA_USERNAME", "OTA_PASSWORD", "LED_MATRIX_ROTATION", "MQTT_PERIOD", "HAS_IR", "HAS_WALLSWITCH" };
+            "OTA_USERNAME", "OTA_PASSWORD", "LED_MATRIX_ROTATION", "MQTT_PERIOD", "HAS_IR", "HAS_WALLSWITCH",
+            "LDR_MIN", "LDR_MAX" };
     for (const auto &key : keys) {
         if (!json_config.containsKey(key.c_str())) {
             isOk = false;
@@ -50,6 +51,8 @@ void CConfig::setDefault() {
     json_config["LED_MATRIX_ROTATION"] = 0;
     json_config["HAS_IR"] = 0;
     json_config["HAS_WALLSWITCH"] = 0;
+    json_config["LDR_MIN"] = 0;
+    json_config["LDR_MAX"] = 1000;
 
     DBG_OUT << "default config " << json_config.capacity() << ":" << json_config.memoryUsage() << endl;
     auto cmdFile = LittleFS.open(JSON_FILE_CONFIG, "w");

@@ -34,5 +34,11 @@ class CConfig {
     const bool getHasWallSwitch() const {
         return json_config["HAS_WALLSWITCH"].as<bool>();
     }
+    const int getLDRMin() const {
+        return json_config["LDR_MIN"].as<int>();
+    }
+    const int getLDRMax() const {
+        return json_config["LDR_MAX"].as<int>();
+    }
 };
 extern CConfig config;

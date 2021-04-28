@@ -30,8 +30,6 @@
 
 #include "DHTesp.h"
 
-#include "./libs/CLightDetectResistor.h"
-
 #include "./libs/CMQTT.h"
 #include "./libs/misk.h"
 #include "./libs/wifiHandle.h"
@@ -39,6 +37,7 @@
 #include "./libs/Timezone.h"
 #include "./libs/logs.h"
 #include <libs/CConfig.h>
+#include <libs/CLDRSignal.h>
 
 #include "CDimableLed.h"
 

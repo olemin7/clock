@@ -18,25 +18,7 @@ auto matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDi
 NTPtime ntpTime;
 void mqtt_send();
 
-class CLDRSignal: public SignalChange<uint8_t> {
-    CLightDetectResistor ldr;
-    uint8_t getValue() {
-        static const auto itransforms = std::array<int16_t, 4> { 250, 500, 750, 1000 };
-        const auto val = ldr.get();
-        uint8_t level = 0;
-        for (const auto it : itransforms) {
-            if (val < it) {
-                break;
-            }
-            level++;
-        }
-        return level;
-    }
-public:
-    int16_t get() {
-        return ldr.get();
-    }
-} LDRSignal;
+CLDRSignal LDRSignal;
 
 class CTimeKeeper: public SignalChange<time_t> {
     time_t getValue() {
@@ -91,7 +73,8 @@ te_ret get_status(ostream &out) {
     toJson(out, dht.getTemperature());
     out << ",\"humidity\":";
     toJson(out, dht.getHumidity());
-    out << ",\"ldr\":" << LDRSignal.get();
+    out << ",\"ldr_raw\":" << LDRSignal.get();
+    out << ",\"ldr\":" << LDRSignal.getSavedValue();
     out << ",\"led\":" << static_cast<unsigned>(ledCmdSignal.getVal());
     out << ",\"mqtt\":" << mqtt.isConnected();
     out << "}";
@@ -290,18 +273,19 @@ void setup() {
     logs_begin();
     DBG_FUNK();
     DBG_OUT << "is_safe_mode=" << is_safe_mode << endl;
-    hw_info(cout);
+    hw_info(DBG_OUT);
     LittleFS.begin();
     if (!config.setup() || is_safe_mode) {
         config.setDefault();
     }
+    LDRSignal.setRange(config.getLDRMin(), config.getLDRMax());
     dimableLed.setup(config.getHasIR(), config.getHasWallSwitch());
     MDNS.addService("http", "tcp", SERVER_PORT_WEB);
     MDNS.begin(config.getDeviceName());
     setup_WebPages();
     setup_signals();
 
-    LittleFS_info(cout);
+    LittleFS_info(DBG_OUT);
     setup_matrix();
     setup_mqtt();
 
