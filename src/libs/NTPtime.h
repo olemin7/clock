@@ -14,7 +14,7 @@ class NTPtime {
 private:
     constexpr static uint32_t resendRequest = 10 * 1000l;
 
-    constexpr static char *ntpServerName = "time.nist.gov";
+    constexpr static auto ntpServerName = "time.nist.gov";
     constexpr static unsigned int localPort = 2390; // local port to listen for UDP packets
 
     byte packetBuffer[48]; // buffer to hold incoming packets

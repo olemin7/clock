@@ -9,6 +9,7 @@ constexpr auto DHTPin = D4;
 
 const char *update_path = "/firmware";
 bool is_safe_mode = false;
+constexpr auto DEF_AP_PWD = "12345678";
 
 Timezone myTZ((TimeChangeRule ) { "DST", Last, Sun, Mar, 3, +3 * 60 },
         (TimeChangeRule ) { "STD", Last, Sun, Oct, 4, +2 * 60 });
@@ -19,6 +20,7 @@ NTPtime ntpTime;
 void mqtt_send();
 
 CLDRSignal LDRSignal;
+const char *pDeviceName = nullptr;
 
 class CTimeKeeper: public SignalChange<time_t> {
     time_t getValue() {
@@ -32,10 +34,11 @@ ESP8266WebServer serverWeb(SERVER_PORT_WEB);
 CMQTT mqtt;
 ESP8266HTTPUpdateServer otaUpdater;
 CWifiStateSignal wifiStateSignal;
+auto config = CConfig<512>();
 
 void setup_matrix() {
     matrix.setIntensity(0); // Use a value between 0 and 15 for brightness
-    const auto rotation = config.getLedMattixRotation();
+    const auto rotation = config.getInt("LED_MATRIX_ROTATION");
     if (rotation) {
         matrix.setRotation(0, rotation);
         matrix.setRotation(1, rotation);
@@ -55,7 +58,7 @@ void setup_matrix() {
 te_ret get_about(ostream &out) {
     out << "{";
     out << "\"firmware\":\"clock " << __DATE__ << " " << __TIME__ << "\"";
-    out << ",\"deviceName\":\"" << config.getDeviceName() << "\"";
+    out << ",\"deviceName\":\"" << pDeviceName << "\"";
     out << ",\"resetInfo\":" << system_get_rst_info()->reason;
     out << "}";
     return er_ok;
@@ -83,7 +86,7 @@ te_ret get_status(ostream &out) {
 
 void setup_WebPages() {
     DBG_FUNK();
-    otaUpdater.setup(&serverWeb, update_path, config.getOtaUsername(), config.getOtaPassword());
+    otaUpdater.setup(&serverWeb, update_path, config.getCSTR("OTA_USERNAME"), config.getCSTR("OTA_PASSWORD"));
 
     serverWeb.on("/restart", []() {
         webRetResult(serverWeb, er_ok);
@@ -140,7 +143,7 @@ void setup_WebPages() {
         }
         webRetResult(serverWeb, ledCmdSignal.onCmd(handler, val) ? er_ok : er_errorResult);
     });
-    if (config.getHasIR()) {
+    if (config.getBool("HAS_IR")) {
         serverWeb.on("/get_rc_val", [&]() {
             DBG_FUNK();
             uint64_t val;
@@ -197,8 +200,8 @@ void setup_WIFIConnect() {
     if (is_safe_mode) {
         WiFi.persistent(false);
         WiFi.mode(WIFI_AP);
-        WiFi.softAP(config.getDeviceName(), DEF_AP_PWD);
-        DBG_OUT << "safemode AP " << config.getDeviceName() << ",pwd: " << DEF_AP_PWD << ",ip:" << WiFi.softAPIP().toString() << std::endl;
+        WiFi.softAP(pDeviceName, DEF_AP_PWD);
+        DBG_OUT << "safemode AP " << pDeviceName << ",pwd: " << DEF_AP_PWD << ",ip:" << WiFi.softAPIP().toString() << std::endl;
     } else if (WIFI_STA == WiFi.getMode()) {
         DBG_OUT << "connecting <" << WiFi.SSID() << "> " << endl;
     }
@@ -238,9 +241,9 @@ void setup_signals() {
 
 void setup_mqtt() {
     DBG_FUNK();
-    mqtt.setup(config.getMqttServer(), config.getMqttPort(), config.getDeviceName());
+    mqtt.setup(config.getCSTR("MQTT_SERVER"), config.getInt("MQTT_PORT"), pDeviceName);
     string topic = "cmd/";
-    topic += config.getDeviceName();
+    topic += pDeviceName;
 
     mqtt.callback(topic, [](char *topic, byte *payload, unsigned int length) {
         DBG_OUT << "MQTT>>[" << topic << "]:";
@@ -266,6 +269,26 @@ void setup_mqtt() {
     });
 }
 
+void setup_config() {
+    config.getConfig().clear();
+    config.getConfig()["DEVICE_NAME"] = "CLOCK";
+    config.getConfig()["MQTT_SERVER"] = "";
+    config.getConfig()["MQTT_PORT"] = 0;
+    config.getConfig()["MQTT_PERIOD"] = 60 * 1000;
+    config.getConfig()["OTA_USERNAME"] = "";
+    config.getConfig()["OTA_PASSWORD"] = "";
+    config.getConfig()["LED_MATRIX_ROTATION"] = 0;
+    config.getConfig()["HAS_IR"] = 0;
+    config.getConfig()["HAS_WALLSWITCH"] = 0;
+    config.getConfig()["LDR_MIN"] = 0;
+    config.getConfig()["LDR_MAX"] = 1000;
+    if (!config.load("/www/config/config.json")) {
+        //write file
+        config.write("/www/config/config.json");
+    }
+    pDeviceName = config.getCSTR("DEVICE_NAME");
+}
+
 void setup() {
     is_safe_mode = isSafeMode(GPIO_PIN_WALL_SWITCH, 3000);
 
@@ -275,13 +298,12 @@ void setup() {
     DBG_OUT << "is_safe_mode=" << is_safe_mode << endl;
     hw_info(DBG_OUT);
     LittleFS.begin();
-    if (!config.setup() || is_safe_mode) {
-        config.setDefault();
-    }
-    LDRSignal.setRange(config.getLDRMin(), config.getLDRMax());
-    dimableLed.setup(config.getHasIR(), config.getHasWallSwitch());
+    setup_config();
+
+    LDRSignal.setRange(config.getInt("LDR_MIN"), config.getInt("LDR_MAX"));
+    dimableLed.setup(config.getBool("HAS_IR"), config.getBool("HAS_WALLSWITCH"));
     MDNS.addService("http", "tcp", SERVER_PORT_WEB);
-    MDNS.begin(config.getDeviceName());
+    MDNS.begin(pDeviceName);
     setup_WebPages();
     setup_signals();
 
@@ -305,9 +327,9 @@ static unsigned long nextMsgMQTT = 0;
 
 void mqtt_send() {
     if (mqtt.isConnected()) {
-        nextMsgMQTT = millis() + config.getMqttPeriod();
+        nextMsgMQTT = millis() + config.getULong("MQTT_PERIOD");
         string topic = "stat/";
-        topic += config.getDeviceName();
+        topic += pDeviceName;
         ostringstream payload;
         get_status(payload);
         DBG_OUT << "MQTT<<[" << topic << "]:" << payload.str() << endl;
