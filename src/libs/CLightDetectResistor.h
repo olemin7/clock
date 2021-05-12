@@ -5,23 +5,27 @@
  *      Author: User
  */
 
-#ifndef CLOCK_CLIGHTDETECTRESISTOR_H_
-#define CLOCK_CLIGHTDETECTRESISTOR_H_
+#pragma once
+#include <Arduino.h>
+#include <stdint.h>
+#include <array>
+#include "CSignal.h"
 /*
-           PhotoR     10K
+ PhotoR     10K
  +3    o---/\/\/--.--/\/\/---o GND
-                  |
+ |
  Pin 0 o-----------
-*/
+ */
 
-class CLightDetectResistor {
-    int cacheVal = 0;
-    static const int maxRefresh = 100; // ms
-    unsigned long nextRead = 0;
-public:
-	CLightDetectResistor();
-	int get();
-	virtual ~CLightDetectResistor();
+class CLightDetectResistor: public SignalChange<int> {
+    std::array<int, 10> m_filter;
+    uint8_t m_count = 0; //average count
+    static constexpr int m_refreshPeriod = 100; // ms
+    unsigned long m_nextRead = 0;
+    const int m_Pin = A0;
+    const int m_Tolerance = 10;
+    public:
+    void setup();
+    int getValue();
 };
 
-#endif /* CLOCK_CLIGHTDETECTRESISTOR_H_ */

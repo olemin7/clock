@@ -76,8 +76,8 @@ te_ret get_status(ostream &out) {
     toJson(out, dht.getTemperature());
     out << ",\"humidity\":";
     toJson(out, dht.getHumidity());
-    out << ",\"ldr_raw\":" << LDRSignal.get();
-    out << ",\"ldr\":" << LDRSignal.getSavedValue();
+    out << ",\"ldr_raw\":" << LDRSignal.getRAW();
+    out << ",\"ldr\":" << static_cast<unsigned>(LDRSignal.getValue());
     out << ",\"led\":" << static_cast<unsigned>(ledCmdSignal.getVal());
     out << ",\"mqtt\":" << mqtt.isConnected();
     out << "}";
@@ -299,7 +299,7 @@ void setup() {
     hw_info(DBG_OUT);
     LittleFS.begin();
     setup_config();
-
+    LDRSignal.setup();
     LDRSignal.setRange(config.getInt("LDR_MIN"), config.getInt("LDR_MAX"));
     dimableLed.setup(config.getBool("HAS_IR"), config.getBool("HAS_WALLSWITCH"));
     MDNS.addService("http", "tcp", SERVER_PORT_WEB);
