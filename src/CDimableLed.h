@@ -16,7 +16,7 @@
 #include <functional>
 #include <map>
 #include <tuple>
-#include "./libs/CSignal.h"
+#include <CSignal.h>
 
 constexpr uint16_t kCaptureBufferSize = 1024;
 constexpr uint8_t kTimeout = 15;  // Milli-Seconds

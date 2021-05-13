@@ -7,8 +7,7 @@
 
 #ifndef SRC_LIBS_CLDRSIGNAL_H_
 #define SRC_LIBS_CLDRSIGNAL_H_
-#include <libs/CADC_filter.h>
-#include "CADC_filter.h"
+#include <CADC_filter.h>
 
 class CLDRSignal: public Signal<uint8_t> {
     CADC_filter ldr;

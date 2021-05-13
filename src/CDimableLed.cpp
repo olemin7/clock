@@ -7,9 +7,9 @@
 
 #include "CDimableLed.h"
 #include <iostream>
-#include "./libs/logs.h"
+#include <logs.h>
 #include <TimeLib.h>
-#include "./libs/misk.h"
+#include <misk.h>
 
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>

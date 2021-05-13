@@ -3,3 +3,4 @@ secret.h
 wifi.json
 .cproject
 .settings/
+lib/

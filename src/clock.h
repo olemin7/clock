@@ -24,20 +24,20 @@
 #include <string>
 #include <ctime>
 
-#include "./libs/NTPtime.h"
-#include "./libs/Max72xxPanel.h" // https://github.com/markruys/arduino-Max72xxPanel.git
+#include <NTPtime.h>
+#include <Max72xxPanel.h> // https://github.com/markruys/arduino-Max72xxPanel.git
 #include "FreeMono9pt7b.h"
 
 #include "DHTesp.h"
 
-#include "./libs/CMQTT.h"
-#include "./libs/misk.h"
-#include "./libs/wifiHandle.h"
+#include <CMQTT.h>
+#include <misk.h>
+#include <wifiHandle.h>
 #include <TimeLib.h>
-#include "./libs/Timezone.h"
-#include "./libs/logs.h"
-#include <libs/CConfig.h>
-#include <libs/CLDRSignal.h>
+#include <Timezone.h>
+#include <logs.h>
+#include <CConfig.h>
+#include "CLDRSignal.h"
 
 #include "CDimableLed.h"
 
