@@ -1,7 +1,7 @@
 /*
  * CObserver.h
  *
- *  Created on: 2 jan 2021
+ *  Created on: 13 may  2021
  *      Author: ominenko
  */
 
@@ -19,15 +19,31 @@ template<class T>
 class Signal {
 private:
     std::vector<std::function<void(const T&)> > m_onSignal;
+    std::vector<std::function<void(const T&)> > m_onChange;
+    bool m_firstTime = true; //for first mine init;
+    T m_preVal;
     protected:
-    void notify(const T &value) const {
-        for (auto iterator : m_onSignal)
+    void notify(const T &value) {
+        for (auto &iterator : m_onSignal) {
             iterator(value);
+        }
+        if (m_firstTime || isChanged(value, m_preVal)) {
+            m_firstTime = false;
+            m_preVal = value;
+            for (auto &iterator : m_onChange) {
+                iterator(value);
+            }
+        }
     }
-
+    virtual bool isChanged(const T &lhs, const T &rhs) {
+        return lhs != rhs;
+    }
 public:
     void onSignal(std::function<void(const T&)> _onSignal) {
         m_onSignal.push_back(_onSignal);
+    }
+    void onChange(std::function<void(const T&)> _onSignal) {
+        m_onChange.push_back(_onSignal);
     }
 };
 

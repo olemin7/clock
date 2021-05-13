@@ -17,14 +17,18 @@
  Pin 0 o-----------
  */
 
-class CLightDetectResistor: public SignalChange<int> {
+class CADC_filter: public SignalChange<int> {
     std::array<int, 10> m_filter;
     uint8_t m_count = 0; //average count
     static constexpr int m_refreshPeriod = 100; // ms
     unsigned long m_nextRead = 0;
-    const int m_Pin = A0;
+    const int m_Pin;
     const int m_Tolerance = 10;
     public:
+    CADC_filter(int _Pin = A0) :
+            m_Pin(_Pin) {
+    }
+    ;
     void setup();
     int getValue();
 };

@@ -7,11 +7,11 @@
 
 #ifndef SRC_LIBS_CLDRSIGNAL_H_
 #define SRC_LIBS_CLDRSIGNAL_H_
-#include "CSignal.h"
-#include "CLightDetectResistor.h"
+#include <libs/CADC_filter.h>
+#include "CADC_filter.h"
 
 class CLDRSignal: public Signal<uint8_t> {
-    CLightDetectResistor ldr;
+    CADC_filter ldr;
     int16_t m_min = 250;
     int16_t m_max = 1000;
     static constexpr auto m_intensity_min = uint8_t(0);

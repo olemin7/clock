@@ -5,13 +5,13 @@
  *      Author: User
  */
 #include <ESP8266WiFi.h>
-#include "CLightDetectResistor.h"
+#include <libs/CADC_filter.h>
 
-void CLightDetectResistor::setup() {
+void CADC_filter::setup() {
     pinMode(m_Pin, INPUT);
 }
 
-int CLightDetectResistor::getValue() {
+int CADC_filter::getValue() {
     const auto now = millis();
     if (now >= m_nextRead) {
         m_nextRead = now + m_refreshPeriod;
