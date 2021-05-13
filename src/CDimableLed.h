@@ -17,6 +17,7 @@
 #include <map>
 #include <tuple>
 #include <CSignal.h>
+#include <logs.h>
 
 constexpr uint16_t kCaptureBufferSize = 1024;
 constexpr uint8_t kTimeout = 15;  // Milli-Seconds
@@ -29,22 +30,27 @@ constexpr auto JSON_FILE_PRESET_CMD = "/www/config/preset_cmd.json";
 constexpr auto JSON_FILE_PRESET_RC = "/www/config/preset_rc.json";
 
 class CIRSignal: public SignalLoop<uint64_t> {
+private:
     IRrecv irrecv;
+    bool getValue(uint64_t &val) override;
     public:
     CIRSignal();
     bool getExclusive(uint64_t &val, const uint32_t timeout, std::function<void(void)> blink);
-    void begin() override;
-    void loop() override;
+    void begin();
+    ~CIRSignal() {
+    }
 };
 
-class CWallSwitchSignal: public SignalChange<bool> {
+class CWallSwitchSignal: public SignalLoop<bool> {
 private:
     bool preVal_;
     uint32_t event_timeout;
-    bool getValue();
+    bool getValue(bool &val) override;
     bool readRaw() const;
     public:
-    void begin() override;
+    void begin();
+    ~CWallSwitchSignal() {
+    }
 };
 
 /*

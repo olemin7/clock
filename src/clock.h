@@ -26,7 +26,7 @@
 
 #include <NTPtime.h>
 #include <Max72xxPanel.h> // https://github.com/markruys/arduino-Max72xxPanel.git
-#include "FreeMono9pt7b.h"
+#include <FreeMono9pt7b.h>
 
 #include "DHTesp.h"
 

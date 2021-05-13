@@ -5,25 +5,8 @@ pio project init --ide eclipse
 clock with ntp synk
 # Board
 http://arduino.esp8266.com/stable/package_esp8266com_index.json
-# libs
- 1 "Rtc by Makuna"
- https://github.com/Makuna/Rtc.git
- 2.1
- https://github.com/adafruit/Adafruit-GFX-Library.git
- 2.2
- https://github.com/markruys/arduino-Max72xxPanel.git
- 3.
- https://github.com/PaulStoffregen/Time.git
- 4.
- https://github.com/JChristensen/Timezone.git 
- 5.
- https://github.com/amin7/libpack
- 6.
- https://github.com/knolleary/pubsubclient.git
- 7.1
- https://github.com/adafruit/Adafruit_Sensor.git 	
- 7.2
- https://github.com/adafruit/DHT-sensor-library.git
+# lib 
+https://github.com/olemin7/esp_libs
 
 # referenses
 schematic: https://circuits.io/circuits/3798057-net-clock-led

@@ -5,36 +5,33 @@
  *      Author: ominenko
  */
 
-#ifndef SRC_LIBS_CLDRSIGNAL_H_
-#define SRC_LIBS_CLDRSIGNAL_H_
+#pragma once
+#include <stdint.h>
 #include <CADC_filter.h>
 
 class CLDRSignal: public Signal<uint8_t> {
     CADC_filter ldr;
-    int16_t m_min = 250;
-    int16_t m_max = 1000;
-    static constexpr auto m_intensity_min = uint8_t(0);
-    static constexpr auto m_intensity_max = uint8_t(15);
-    uint8_t m_level;
+    int16_t m_input_min = 250;
+    int16_t m_input_max = 1000;
+    uint8_t m_out_min = 0;
+    uint8_t m_out_max = 15;
     void on_change(const int &val);
     public:
-    uint8_t getValue() {
-        return m_level;
-    }
     void loop() {
         ldr.loop();
     }
     void setup();
-    void begin() {
-        ldr.begin();
+    void setRange(int16_t iMin, int16_t iMax, uint8_t oMin, uint8_t oMax) {
+        m_input_min = iMin;
+        m_input_max = iMax;
+        m_out_min = oMin;
+        m_out_max = oMax;
     }
-    void setRange(int16_t min, int16_t max) {
-        m_min = min;
-        m_max = max;
+    int16_t getLDR() {
+        int val;
+        ldr.getValue(val);
+        return val;
     }
-    int16_t getRAW() {
-        return ldr.getSavedValue();
+    ~CLDRSignal() {
     }
 };
-
-#endif /* SRC_LIBS_CLDRSIGNAL_H_ */

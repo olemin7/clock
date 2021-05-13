@@ -35,10 +35,7 @@ bool CIRSignal::getExclusive(uint64_t &val, const uint32_t timeout, std::functio
     decode_results results;
     unsigned long blink_timeout = 0;
     while (1) {
-        if (irrecv.decode(&results)) {  // We have captured something.
-            irrecv.resume();
-            DBG_OUT << "excl IR =" << std::hex << results.value << std::dec << endl;
-            val = results.value;
+        if (getValue(val)) {
             return true;
         }
         const auto cur = millis();
@@ -56,41 +53,46 @@ bool CIRSignal::getExclusive(uint64_t &val, const uint32_t timeout, std::functio
 void CIRSignal::begin() {
     irrecv.enableIRIn();  // Start up the IR receiver.
 }
-
-void CIRSignal::loop() {
+bool CIRSignal::getValue(uint64_t &val) {
     decode_results results;
-    if (irrecv.decode(&results)) {  // We have captured something.
-        irrecv.resume();
-        cout << "IR =" << std::hex << results.value << endl;
-        if (!results.repeat) {
-            this->notify(results.value);
-        }
+    if (!irrecv.decode(&results)) {
+        return false;
     }
+    // We have captured something.
+    irrecv.resume();
+    if (results.repeat) {
+        DBG_OUT << "IR repeat" << endl;
+        return false;
+    }
+    DBG_OUT << "IR =" << std::hex << results.value << std::dec << endl;
+    val = results.value;
+    return true;
 }
+
 bool CWallSwitchSignal::readRaw() const {
     return digitalRead(GPIO_PIN_WALL_SWITCH);
 }
 
-bool CWallSwitchSignal::getValue() {
+bool CWallSwitchSignal::getValue(bool &val) {
     const auto cur = millis();
     const auto value = readRaw();
     if (value == preVal_) {
         event_timeout = 0;
     } else if (event_timeout) {
         if (cur > event_timeout) {
-            preVal_ = value; //debounce ok
-            cout << "switch " << preVal_ << endl;
+            val = preVal_ = value; //debounce ok
+            DBG_OUT << "switch " << preVal_ << endl;
+            return true;
         }
     } else {
         event_timeout = cur + TIMEOUT_WALL_SWITCH;
     }
-    return preVal_;
+    return false;
 }
 
 void CWallSwitchSignal::begin() {
     DBG_FUNK();
     pinMode(GPIO_PIN_WALL_SWITCH, INPUT_PULLUP);
-    SignalChange<bool>::begin();
     preVal_ = false;
     event_timeout = 0;
 }
@@ -182,7 +184,7 @@ void CLedCmdSignal::toggle(const int32_t val) {
 }
 
 bool CLedCmdSignal::onCmd(const std::string &cmd, const int32_t val) {
-    DBG_OUT << "cmd=" << cmd << ", val=" << std::hex << val << endl;
+    DBG_OUT << "cmd=" << cmd << ", val=" << std::hex << val << std::dec << endl;
     const auto it = m_cmd_list.find(cmd);
     if (it != m_cmd_list.end()) {
         it->second(val);
@@ -234,7 +236,7 @@ void CDimableLed::setup(bool hasIR, bool hasWallSwitch) {
         IRSignal.begin();
     }
     if (m_hasWallSwitch) {
-        WallSwitchSignal.onSignal([](const bool &state) {
+        WallSwitchSignal.onChange([](const bool &state) {
             ledCmdSignal.onWallcmd(state);
         });
 

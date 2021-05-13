@@ -22,9 +22,10 @@ void mqtt_send();
 CLDRSignal LDRSignal;
 const char *pDeviceName = nullptr;
 
-class CTimeKeeper: public SignalChange<time_t> {
-    time_t getValue() {
-        return myTZ.toLocal(now());
+class CTimeKeeper: public SignalLoop<time_t> {
+    bool getValue(time_t &val) {
+        val = myTZ.toLocal(now());
+        return true;
     }
 } timeKeeper;
 
@@ -65,7 +66,7 @@ te_ret get_about(ostream &out) {
 }
 
 te_ret get_status(ostream &out) {
-    const auto local = timeKeeper.getSavedValue();
+    const auto local = timeKeeper.getPreValue();
     out << "{\"timeStatus\":" << timeStatus();
     out << ",\"time\":\"";
     toTime(out, local);
@@ -76,8 +77,8 @@ te_ret get_status(ostream &out) {
     toJson(out, dht.getTemperature());
     out << ",\"humidity\":";
     toJson(out, dht.getHumidity());
-    out << ",\"ldr_raw\":" << LDRSignal.getRAW();
-    out << ",\"ldr\":" << static_cast<unsigned>(LDRSignal.getValue());
+    out << ",\"ldr_raw\":" << LDRSignal.getLDR();
+    out << ",\"ldr\":" << static_cast<unsigned>(LDRSignal.getPreValue());
     out << ",\"led\":" << static_cast<unsigned>(ledCmdSignal.getVal());
     out << ",\"mqtt\":" << mqtt.isConnected();
     out << "}";
@@ -192,11 +193,10 @@ void setup_WebPages() {
 void setup_WIFIConnect() {
     DBG_FUNK();
     WiFi.begin();
-    wifiStateSignal.onSignal([](const wl_status_t &status) {
+    wifiStateSignal.onChange([](const wl_status_t &status) {
         wifi_status(cout);
     }
     );
-    wifiStateSignal.begin();
     if (is_safe_mode) {
         WiFi.persistent(false);
         WiFi.mode(WIFI_AP);
@@ -209,16 +209,15 @@ void setup_WIFIConnect() {
 
 void setup_signals() {
     DBG_FUNK();
-    LDRSignal.onSignal([](const uint8_t &level) {
+    LDRSignal.onChange([](const uint8_t &level) {
         matrix.setIntensity(level);
-        cout << "matrix.setIntensity=" << level << endl;
     }
     );
-    ledCmdSignal.onSignal([&](const uint16_t val) {
+    ledCmdSignal.onChange([&](const uint16_t val) {
         mqtt_send();
     });
 
-    timeKeeper.onSignal([](const time_t &time) {
+    timeKeeper.onChange([](const time_t &time) {
         if (timeNotSet == timeStatus()) {
             return;
         }
@@ -235,8 +234,6 @@ void setup_signals() {
         matrix.print(buffMin);
         matrix.write();
     });
-    LDRSignal.begin();
-    timeKeeper.begin();
 }
 
 void setup_mqtt() {
@@ -278,6 +275,7 @@ void setup_config() {
     config.getConfig()["OTA_USERNAME"] = "";
     config.getConfig()["OTA_PASSWORD"] = "";
     config.getConfig()["LED_MATRIX_ROTATION"] = 0;
+    config.getConfig()["LED_MATRIX_I_MAX"] = 15;
     config.getConfig()["HAS_IR"] = 0;
     config.getConfig()["HAS_WALLSWITCH"] = 0;
     config.getConfig()["LDR_MIN"] = 0;
@@ -300,7 +298,7 @@ void setup() {
     LittleFS.begin();
     setup_config();
     LDRSignal.setup();
-    LDRSignal.setRange(config.getInt("LDR_MIN"), config.getInt("LDR_MAX"));
+    LDRSignal.setRange(config.getInt("LDR_MIN"), config.getInt("LDR_MAX"), 0, config.getInt("LED_MATRIX_I_MAX"));
     dimableLed.setup(config.getBool("HAS_IR"), config.getBool("HAS_WALLSWITCH"));
     MDNS.addService("http", "tcp", SERVER_PORT_WEB);
     MDNS.begin(pDeviceName);
