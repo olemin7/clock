@@ -241,28 +241,28 @@ void setup_mqtt() {
     mqtt.setup(config.getCSTR("MQTT_SERVER"), config.getInt("MQTT_PORT"), pDeviceName);
     string topic = "cmd/";
     topic += pDeviceName;
-
-    mqtt.callback(topic, [](char *topic, byte *payload, unsigned int length) {
-        DBG_OUT << "MQTT>>[" << topic << "]:";
-        auto tt = reinterpret_cast<const char*>(payload);
-        auto i = length;
-        while (i--) {
-            DBG_OUT << *tt;
-            tt++;
-        };
-        DBG_OUT << endl;
-        StaticJsonDocument<512> json_cmd;
-        DeserializationError error = deserializeJson(json_cmd, payload, length);
-        if (error) {
-            DBG_OUT << "Failed to read file, using default configuration" << endl;
-        } else {
-            if (json_cmd.containsKey("led")) {
-                ledCmdSignal.set(json_cmd["led"]);
-            }
-            if (json_cmd.containsKey("time")) {
-                ledCmdSignal.set(json_cmd["led"]);
-            }
+    mqtt.callback(topic, [](char *topic, uint8_t *payload,
+                            unsigned int length) {
+      DBG_OUT << "MQTT>>[" << topic << "]:";
+      auto tt = reinterpret_cast<const char *>(payload);
+      auto i = length;
+      while (i--) {
+        DBG_OUT << *tt;
+        tt++;
+      };
+      DBG_OUT << endl;
+      StaticJsonDocument<512> json_cmd;
+      DeserializationError error = deserializeJson(json_cmd, payload, length);
+      if (error) {
+        DBG_OUT << "Failed to read file, using default configuration" << endl;
+      } else {
+        if (json_cmd.containsKey("led")) {
+          ledCmdSignal.set(json_cmd["led"]);
         }
+        if (json_cmd.containsKey("time")) {
+          ledCmdSignal.set(json_cmd["led"]);
+        }
+      }
     });
 }
 

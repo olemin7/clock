@@ -40,16 +40,16 @@ RST | Reset       | RST          |
 
 
 #ADC wemos
- -----A0
-  |
- 220K
-  |--- ADC
- 100K
-  |
- GND
+ A0--
+    |
+   220K
+    |--- ADC
+   100K
+    |
+   GND
  
 #photoresistor
-(+5) -termistor- (A0) -resistor 10k- (GND)
+(+3.3) -termistor- (A0) -resistor 10k- (GND)
 
 #DHT
 1 vcc (3.3V)

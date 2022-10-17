@@ -4,3 +4,5 @@ wifi.json
 .cproject
 .settings/
 lib/
+pcb/main.s#*
+pcb/main.b#*
