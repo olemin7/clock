@@ -1,6 +1,13 @@
 #include "clock.h"
 using namespace std;
 
+constexpr auto SERIAL_BAUND = 115200;
+constexpr auto SERVER_PORT_WEB = 80;
+
+constexpr auto AP_MODE_TIMEOUT = 30 * 1000;  // switch to ap if no wifi
+constexpr auto AUTO_REBOOT_AFTER_AP_MODE =
+    5 * 60 * 1000;  // switch to ap if no wifi
+
 constexpr auto pinCS = D6;
 constexpr auto numberOfHorizontalDisplays = 4;
 constexpr auto numberOfVerticalDisplays = 1;
@@ -8,7 +15,6 @@ constexpr auto numberOfVerticalDisplays = 1;
 constexpr auto DHTPin = D4;
 
 const char *update_path = "/firmware";
-bool is_safe_mode = false;
 constexpr auto DEF_AP_PWD = "12345678";
 
 Timezone myTZ((TimeChangeRule ) { "DST", Last, Sun, Mar, 3, +3 * 60 },
@@ -35,6 +41,7 @@ ESP8266WebServer serverWeb(SERVER_PORT_WEB);
 CMQTT mqtt;
 ESP8266HTTPUpdateServer otaUpdater;
 CWifiStateSignal wifiStateSignal;
+cevent_loop event_loop;
 auto config = CConfig<512>();
 
 void setup_matrix() {
@@ -192,19 +199,39 @@ void setup_WebPages() {
 
 void setup_WIFIConnect() {
     DBG_FUNK();
+    static int16_t to_ap_mode_thread = 0;
     WiFi.begin();
     wifiStateSignal.onChange([](const wl_status_t &status) {
-        wifi_status(cout);
-    }
-    );
-    if (is_safe_mode) {
-        WiFi.persistent(false);
-        WiFi.mode(WIFI_AP);
-        WiFi.softAP(pDeviceName, DEF_AP_PWD);
-        DBG_OUT << "safemode AP " << pDeviceName << ",pwd: " << DEF_AP_PWD << ",ip:" << WiFi.softAPIP().toString() << std::endl;
-    } else if (WIFI_STA == WiFi.getMode()) {
-        DBG_OUT << "connecting <" << WiFi.SSID() << "> " << endl;
-    }
+      if (WL_CONNECTED == status) {
+        // skip AP mode
+        event_loop.remove(to_ap_mode_thread);
+      }
+      wifi_status(cout);
+    });
+
+    to_ap_mode_thread = event_loop.on_timeout(AP_MODE_TIMEOUT, []() {
+      matrix.fillScreen(LOW);
+      matrix.setCursor(0, 7);
+      matrix.print("AP");
+      matrix.write();
+      WiFi.persistent(false);
+      WiFi.mode(WIFI_AP);
+      WiFi.softAP(pDeviceName, DEF_AP_PWD);
+      DBG_OUT << "AP mode, name:" << pDeviceName << " ,pwd: " << DEF_AP_PWD
+              << ",ip:" << WiFi.softAPIP().toString() << std::endl;
+
+      event_loop.on_timeout(AUTO_REBOOT_AFTER_AP_MODE, []() {
+        DBG_OUT << "Rebooting" << std::endl;
+        ESP.restart();
+      });
+
+
+    });
+
+    if (WIFI_STA == WiFi.getMode()) {
+            DBG_OUT << "connecting <" << WiFi.SSID() << "> " << endl;
+            return;
+        }
 }
 
 void setup_signals() {
@@ -288,12 +315,9 @@ void setup_config() {
 }
 
 void setup() {
-    is_safe_mode = isSafeMode(GPIO_PIN_WALL_SWITCH, 3000);
-
     Serial.begin(SERIAL_BAUND);
     logs_begin();
     DBG_FUNK();
-    DBG_OUT << "is_safe_mode=" << is_safe_mode << endl;
     hw_info(DBG_OUT);
     LittleFS.begin();
     setup_config();
@@ -357,4 +381,5 @@ void loop() {
     LDRSignal.loop();
     timeKeeper.loop();
     serverWeb.handleClient();
+    event_loop.loop();
 }

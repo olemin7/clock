@@ -32,7 +32,7 @@ CIRSignal::CIRSignal() :
 bool CIRSignal::getExclusive(uint64_t &val, const uint32_t timeout, std::function<void(void)> blink) {
     DBG_FUNK();
     const auto wait = millis() + timeout;
-    decode_results results;
+    //   decode_results results;
     unsigned long blink_timeout = 0;
     while (1) {
         if (getValue(val)) {

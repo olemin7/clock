@@ -7,7 +7,7 @@
 
 #ifndef CLOCK_CLOCK_H_
 #define CLOCK_CLOCK_H_
-
+// clang-format off
 #include <Arduino.h>
 #include <SPI.h>
 #include <ESP8266WiFi.h>
@@ -31,19 +31,19 @@
 #include "DHTesp.h"
 
 #include <CMQTT.h>
-#include <misk.h>
-#include <wifiHandle.h>
+
 #include <TimeLib.h>
 #include <Timezone.h>
+// clang-format on
+#include <misk.h>
+#include <wifiHandle.h>
 #include <logs.h>
 #include <CConfig.h>
 #include "CLDRSignal.h"
 
 #include "CDimableLed.h"
 
+#include <eventloop.h>
 #define DEBUG
 
-#define SERIAL_BAUND 115200
-#define SERVER_PORT_WEB 80
-#define WIFI_CONNECT_TIMEOUT 20000 //ms
 #endif /* CLOCK_CLOCK_H_ */
