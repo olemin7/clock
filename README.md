@@ -1,5 +1,6 @@
 # platformio
 source ~/.platformio/penv/bin/activate
+pio run
 pio project init --ide eclipse
 # clock
 clock with ntp synk

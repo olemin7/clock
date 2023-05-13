@@ -73,23 +73,22 @@ te_ret get_about(ostream &out) {
 }
 
 te_ret get_status(ostream &out) {
-    const auto local = timeKeeper.getPreValue();
-    out << "{\"timeStatus\":" << timeStatus();
-    out << ",\"time\":\"";
-    toTime(out, local);
-    out << " ";
-    toDate(out, local);
-    out << "\"";
-    out << ",\"temperature\":";
-    toJson(out, dht.getTemperature());
-    out << ",\"humidity\":";
-    toJson(out, dht.getHumidity());
-    out << ",\"ldr_raw\":" << LDRSignal.getLDR();
-    out << ",\"ldr\":" << static_cast<unsigned>(LDRSignal.getPreValue());
-    out << ",\"led\":" << static_cast<unsigned>(ledCmdSignal.getVal());
-    out << ",\"mqtt\":" << mqtt.isConnected();
-    out << "}";
-    return er_ok;
+  const auto local = timeKeeper.getLastValue();
+  out << "{\"timeStatus\":" << timeStatus();
+  out << ",\"time\":\"";
+  toTime(out, local);
+  out << " ";
+  toDate(out, local);
+  out << "\"";
+  out << ",\"temperature\":";
+  toJson(out, dht.getTemperature());
+  out << ",\"humidity\":";
+  toJson(out, dht.getHumidity());
+  out << ",\"ldr_raw\":" << LDRSignal.getLDR();
+  out << ",\"ldr\":" << static_cast<unsigned>(LDRSignal.getLastValue());
+  out << ",\"mqtt\":" << mqtt.isConnected();
+  out << "}";
+  return er_ok;
 }
 
 void setup_WebPages() {
@@ -136,45 +135,7 @@ void setup_WebPages() {
                 wifiHandle_sendlist(serverWeb);
             });
     serverWeb.on("/connectwifi", HTTP_ANY,
-            [&]() {
-                wifiHandle_connect(serverWeb);
-            });
-    serverWeb.on("/command", [&]() {
-        if (!serverWeb.hasArg("handler")) {
-            webRetResult(serverWeb, er_no_parameters);
-            return;
-        }
-        const auto handler = serverWeb.arg("handler").c_str();
-        int val = 0;
-        if (serverWeb.hasArg("val")) {
-            val = serverWeb.arg("val").toInt();
-        }
-        webRetResult(serverWeb, ledCmdSignal.onCmd(handler, val) ? er_ok : er_errorResult);
-    });
-    if (config.getBool("HAS_IR")) {
-        serverWeb.on("/get_rc_val", [&]() {
-            DBG_FUNK();
-            uint64_t val;
-            const auto ledpre = ledCmdSignal.getVal();
-            if (false == IRSignal.getExclusive(val, 5000, []() {
-                ledCmdSignal.toggle(0);
-            })
-            ) {
-                ledCmdSignal.set(ledpre);
-                webRetResult(serverWeb, er_timeout);
-                return;
-            }
-            ledCmdSignal.set(ledpre);
-
-            wifiHandle_send_content_json(serverWeb, [=](ostream &out) {
-                out << "{\"rc_val\":";
-                out << val;
-                out << "}";
-                return er_ok;
-            });
-        }
-        );
-    }
+                 [&]() { wifiHandle_connect(pDeviceName, serverWeb, true); });
 
     serverWeb.on("/getlogs", HTTP_ANY,
             [&]() {
@@ -200,7 +161,10 @@ void setup_WebPages() {
 void setup_WIFIConnect() {
     DBG_FUNK();
     static int16_t to_ap_mode_thread = 0;
-    WiFi.begin();
+    //    WiFi.hostname(pDeviceName);
+    //    WiFi.begin();
+    setup_wifi("chamber", "5weetHom@", pDeviceName, WIFI_STA, false);
+
     wifiStateSignal.onChange([](const wl_status_t &status) {
       if (WL_CONNECTED == status) {
         // skip AP mode
@@ -209,24 +173,19 @@ void setup_WIFIConnect() {
       wifi_status(cout);
     });
 
-    to_ap_mode_thread = event_loop.on_timeout(AP_MODE_TIMEOUT, []() {
+    to_ap_mode_thread = event_loop.set_timeout( []() {
       matrix.fillScreen(LOW);
       matrix.setCursor(0, 7);
       matrix.print("AP");
       matrix.write();
       WiFi.persistent(false);
-      WiFi.mode(WIFI_AP);
-      WiFi.softAP(pDeviceName, DEF_AP_PWD);
-      DBG_OUT << "AP mode, name:" << pDeviceName << " ,pwd: " << DEF_AP_PWD
-              << ",ip:" << WiFi.softAPIP().toString() << std::endl;
+      setup_wifi("", DEF_AP_PWD, pDeviceName, WIFI_AP, false);
 
-      event_loop.on_timeout(AUTO_REBOOT_AFTER_AP_MODE, []() {
+      event_loop.set_timeout( []() {
         DBG_OUT << "Rebooting" << std::endl;
         ESP.restart();
-      });
-
-
-    });
+      },AUTO_REBOOT_AFTER_AP_MODE);
+    },AP_MODE_TIMEOUT);
 
     if (WIFI_STA == WiFi.getMode()) {
             DBG_OUT << "connecting <" << WiFi.SSID() << "> " << endl;
@@ -240,9 +199,6 @@ void setup_signals() {
         matrix.setIntensity(level);
     }
     );
-    ledCmdSignal.onChange([&](const uint16_t val) {
-        mqtt_send();
-    });
 
     timeKeeper.onChange([](const time_t &time) {
         if (timeNotSet == timeStatus()) {
@@ -283,12 +239,12 @@ void setup_mqtt() {
       if (error) {
         DBG_OUT << "Failed to read file, using default configuration" << endl;
       } else {
-        if (json_cmd.containsKey("led")) {
-          ledCmdSignal.set(json_cmd["led"]);
-        }
-        if (json_cmd.containsKey("time")) {
-          ledCmdSignal.set(json_cmd["led"]);
-        }
+        //        if (json_cmd.containsKey("led")) {
+        //          ledCmdSignal.set(json_cmd["led"]);
+        //        }
+        //        if (json_cmd.containsKey("time")) {
+        //          ledCmdSignal.set(json_cmd["led"]);
+        //        }
       }
     });
 }
@@ -303,8 +259,6 @@ void setup_config() {
     config.getConfig()["OTA_PASSWORD"] = "";
     config.getConfig()["LED_MATRIX_ROTATION"] = 0;
     config.getConfig()["LED_MATRIX_I_MAX"] = 15;
-    config.getConfig()["HAS_IR"] = 0;
-    config.getConfig()["HAS_WALLSWITCH"] = 0;
     config.getConfig()["LDR_MIN"] = 0;
     config.getConfig()["LDR_MAX"] = 1000;
     if (!config.load("/www/config/config.json")) {
@@ -318,12 +272,13 @@ void setup() {
     Serial.begin(SERIAL_BAUND);
     logs_begin();
     DBG_FUNK();
+
     hw_info(DBG_OUT);
     LittleFS.begin();
     setup_config();
     LDRSignal.setup();
-    LDRSignal.setRange(config.getInt("LDR_MIN"), config.getInt("LDR_MAX"), 0, config.getInt("LED_MATRIX_I_MAX"));
-    dimableLed.setup(config.getBool("HAS_IR"), config.getBool("HAS_WALLSWITCH"));
+    LDRSignal.setRange(config.getInt("LDR_MIN"), config.getInt("LDR_MAX"), 0,
+                       config.getInt("LED_MATRIX_I_MAX"));
     MDNS.addService("http", "tcp", SERVER_PORT_WEB);
     MDNS.begin(pDeviceName);
     setup_WebPages();
@@ -334,12 +289,12 @@ void setup() {
     setup_mqtt();
 
     ntpTime.init();
-//------------------
+    //------------------
     dht.setup(DHTPin, DHTesp::DHT22);
-//-----------------
+    //-----------------
     matrix.fillScreen(LOW);
     matrix.setCursor(0, 7);
-    matrix.print("--:--");
+    matrix.print(pDeviceName);
     matrix.write();
     setup_WIFIConnect();
     DBG_OUT << "Setup done" << endl;
@@ -377,7 +332,6 @@ void loop() {
     wifiStateSignal.loop();
     mqtt_loop();
     ntpTime.loop();
-    dimableLed.loop();
     LDRSignal.loop();
     timeKeeper.loop();
     serverWeb.handleClient();

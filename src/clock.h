@@ -41,7 +41,6 @@
 #include <CConfig.h>
 #include "CLDRSignal.h"
 
-#include "CDimableLed.h"
 
 #include <eventloop.h>
 #define DEBUG
