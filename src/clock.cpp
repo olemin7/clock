@@ -161,9 +161,8 @@ void setup_WebPages() {
 void setup_WIFIConnect() {
     DBG_FUNK();
     static int16_t to_ap_mode_thread = 0;
-    //    WiFi.hostname(pDeviceName);
-    //    WiFi.begin();
-    setup_wifi("chamber", "5weetHom@", pDeviceName, WIFI_STA, false);
+    WiFi.hostname(pDeviceName);
+    WiFi.begin();
 
     wifiStateSignal.onChange([](const wl_status_t &status) {
       if (WL_CONNECTED == status) {
