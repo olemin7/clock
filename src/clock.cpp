@@ -33,6 +33,7 @@
 
 #include <WiFiUdp.h>
 #include <Timezone.h>
+#include <ESP8266TrueRandom.h>
 
 #define DEBUG
 
@@ -194,9 +195,11 @@ void setup_WIFIConnect() {
 
     static WiFiEventHandler onStationModeGotIP = WiFi.onStationModeGotIP([to_ap_mode_thread](auto event) {
         to_ap_mode_thread->cancel();
-        char buffMin[6];
-        sprintf_P(buffMin, ".%03u", event.ip[3]);
-        display_print(buffMin);
+        if (!ntp_client.isTimeSet()) { // do not show ip for network distraction
+            char buffMin[6];
+            sprintf_P(buffMin, ".%03u", event.ip[3]);
+            display_print(buffMin);
+        }
         DBG_OUT << "WiFi IP=" << event.ip << ", mask=" << event.mask << ", gw=" << event.gw << endl;
     });
 
@@ -217,29 +220,46 @@ void setup_signals() {
 void setup_mqtt() {
     DBG_FUNK();
     mqtt.setup(config.getCSTR("MQTT_SERVER"), config.getInt("MQTT_PORT"), pDeviceName);
+    const auto mqtt_period = config.getInt("MQTT_PERIOD");
 
     static auto mqtt_el = event_loop::set_interval(
-        []() {
+        [mqtt_period]() {
             if (mqtt.isConnected()) {
                 string topic = "stat/";
                 topic += pDeviceName;
-                StaticJsonDocument<512> sensors;
+                StaticJsonDocument<512> payload;
                 if (!isnan(dht.getTemperature())) {
-                    sensors["temperature"] = dht.getTemperature();
+                    payload["temperature"] = dht.getTemperature();
                 }
                 if (!isnan(dht.getHumidity())) {
-                    sensors["humidity"] = dht.getHumidity();
+                    payload["humidity"] = dht.getHumidity();
                 }
 
-                sensors["ldr"]  = static_cast<unsigned>(LDRSignal.getLastValue());
-                sensors["rssi"] = WiFi.RSSI();
-                sensors["ip"]   = WiFi.localIP();
+                payload["ldr"]          = static_cast<unsigned>(LDRSignal.getLastValue());
+                payload["wifi"]["rssi"] = WiFi.RSSI();
+                payload["wifi"]["ip"]   = WiFi.localIP();
+                payload["upd_period"]   = mqtt_period;
                 String json_string;
-                serializeJson(sensors, json_string);
+                serializeJson(payload, json_string);
                 mqtt.publish(topic, json_string.c_str());
             }
         },
-        5min, true);
+        std::chrono::seconds(mqtt_period), 0s);
+
+    const auto power_period = config.getInt("POWER_PERIOD");
+    const auto power_jitter = ESP8266TrueRandom.random(power_period);
+    event_loop::set_interval(
+        [power_period]() {
+            StaticJsonDocument<256> payload;
+            String                  json_string;
+            payload["name"]         = pDeviceName;
+            payload["upd_period"]   = power_period;
+            payload["wifi"]["rssi"] = WiFi.RSSI();
+            payload["wifi"]["ip"]   = WiFi.localIP();
+            serializeJson(payload, json_string);
+            mqtt.publish("stat/power", json_string.c_str());
+        },
+        std::chrono::seconds(power_period), std::chrono::seconds(power_jitter));
 
     mqtt.on_connection_change([](const auto is_connected) {
         DBG_OUT << "setup_mqtt=" << is_connected << endl;
@@ -260,7 +280,8 @@ void setup_config() {
     config.getConfig()["DEVICE_NAME"]         = "CLOCK";
     config.getConfig()["MQTT_SERVER"]         = "";
     config.getConfig()["MQTT_PORT"]           = 0;
-    config.getConfig()["MQTT_PERIOD"]         = 60 * 1000;
+    config.getConfig()["MQTT_PERIOD"]         = 60 * 5;
+    config.getConfig()["POWER_PERIOD"]        = 15;
     config.getConfig()["OTA_USERNAME"]        = "";
     config.getConfig()["OTA_PASSWORD"]        = "";
     config.getConfig()["LED_MATRIX_ROTATION"] = 0;
