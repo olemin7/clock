@@ -277,18 +277,20 @@ void setup_mqtt() {
 
 void setup_config() {
     config.getConfig().clear();
-    config.getConfig()["DEVICE_NAME"]         = "CLOCK";
-    config.getConfig()["MQTT_SERVER"]         = "";
-    config.getConfig()["MQTT_PORT"]           = 0;
-    config.getConfig()["MQTT_PERIOD"]         = 60 * 5;
-    config.getConfig()["POWER_PERIOD"]        = 15;
-    config.getConfig()["OTA_USERNAME"]        = "";
-    config.getConfig()["OTA_PASSWORD"]        = "";
-    config.getConfig()["LED_MATRIX_ROTATION"] = 0;
-    config.getConfig()["LED_MATRIX_I_MAX"]    = 15;
-    config.getConfig()["LDR_MIN"]             = 0;
-    config.getConfig()["LDR_MAX"]             = 1000;
-    config.getConfig()["ntpServerName"]       = "time.nist.gov";
+    config.getConfig()["DEVICE_NAME"]             = "CLOCK";
+    config.getConfig()["MQTT_SERVER"]             = "";
+    config.getConfig()["MQTT_PORT"]               = 0;
+    config.getConfig()["MQTT_PERIOD"]             = 60 * 5;
+    config.getConfig()["POWER_PERIOD"]            = 15;
+    config.getConfig()["OTA_USERNAME"]            = "";
+    config.getConfig()["OTA_PASSWORD"]            = "";
+    config.getConfig()["LED_MATRIX_ROTATION"]     = 0;
+    config.getConfig()["LED_MATRIX_I_MAX"]        = 15;
+    config.getConfig()["LDR_MIN"]                 = 0;
+    config.getConfig()["LDR_MAX"]                 = 1000;
+    config.getConfig()["ntpServerName"]           = "time.nist.gov";
+    config.getConfig()["ntpServerUpdateInterval"] = 60 * 60;
+
     if (!config.load("/www/config/config.json")) {
         // write file
         config.write("/www/config/config.json");
@@ -326,6 +328,7 @@ void setup() {
     setup_matrix();
     setup_mqtt();
     ntp_client.setPoolServerName(config.getCSTR("ntpServerName"));
+    ntp_client.setUpdateInterval(config.getULong("ntpServerUpdateInterval"));
     ntp_client.begin();
     //------------------
     dht.setup(DHTPin, DHTesp::DHT22);
@@ -339,8 +342,13 @@ void loop() {
     LDRSignal.loop();
     serverWeb.handleClient();
     event_loop::loop();
-    mqtt.loop();
-    ntp_client.update();
+    if (WiFi.isConnected()) {
+        mqtt.loop();
+        if (!ntp_client.update() && !ntp_client.isTimeSet()) {
+            DBG_OUT << "randomise ntp port" << endl;
+            ntp_client.setRandomPort();
+        }
+    }
     static bool wait_for_first_ntp = true;
     if (wait_for_first_ntp && ntp_client.isTimeSet()) {
         wait_for_first_ntp = false;
